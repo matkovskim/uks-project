@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h3 style="margin-bottom: 20px">{{object.name}}
+    <span style="float: right;">
+        <a href="{% url 'edit_project' object.id %}" class="btn btn-info"><i style="margin-right: 10px" class="fas fa-edit"></i>Edit</a>
+        <a href="{% url 'delete_project' object.id %}" class="btn btn-secondary"><i style="margin-right: 10px" class="fas fa-trash-alt"></i>Delete</a>
+    </span>
+</h3>
+<h6>{{object.git_repo}}</h6>
+<h6>{{object.description}}</h6>
+
+<hr>
+
+<ul class="nav nav-tabs" id="myTab" role="tablist">
+    <li class="nav-item">
+        <a class="nav-link active" id="code-tab" data-toggle="tab" href="#code" role="tab" aria-controls="code" aria-selected="true"><i style="margin-right:6px" class="fas fa-laptop-code"></i>Code changes</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="issue-tab" data-toggle="tab" href="#issue" role="tab" aria-controls="issue" aria-selected="false"><i style="margin-right:6px" class="fas fa-exclamation-circle"></i>Issues</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="issue-tab" data-toggle="tab" href="#milestone" role="tab" aria-controls="milestone" aria-selected="false"><i style="margin-right:6px" class="fas fa-map-signs"></i>Milestones</a>
+    </li>
+</ul>
+
+<div class="tab-content" id="myTabContent">
+  <!-- code changes tab -->
+    <div class="tab-pane fade show active" id="code" role="tabpanel" aria-labelledby="code-tab">
+        <div>
+            <div style="margin-top: 20px">
+                <p>TO DO: code changes or whatever</p>
+            </div>
+        </div>
+    </div>
+  <!-- issues tab -->
+    <div class="tab-pane fade" id="issue" role="tabpanel" aria-labelledby="issue-tab">
+        <div style="margin-top: 20px">
+            <div style="margin-top: 20px">
+                {% if object.issue_set.all %}
+                    <!-- list of issues -->
+                    {% for issue in object.issue_set.all %}
+
+                    {% endfor %}
+                {% else %}
+                    <p>There are no issues for this project.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="tab-pane fade" id="milestone" role="tabpanel" aria-labelledby="milestone-tab">
+        <div style="margin-top: 20px">
+            <div style="margin-top: 20px">
+                {% if object.milestone_set.all %}
+                    <!-- TODO list of milestones -->
+                    {% for milestone in object.milestone_set.all %}
+ 
+                    {% endfor %}
+                {% else %}
+                    <p>There are no milestones for this project.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- add new tabs ? -->
+</div>
+</ul>
+
+{% endblock %}

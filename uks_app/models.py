@@ -1,15 +1,16 @@
 from django.db import models
 
-OPEN='open'
-CLOSE='close'
+OPEN='OP'
+CLOSED='CL'
 PROBLEM_STATE = (
-    (OPEN, 'open'),
-    (CLOSE, 'close')
+    (OPEN, 'Open'),
+    (CLOSED, 'Closed')
 )
 
 class ObservedProject(models.Model):
     name = models.CharField(max_length=200, blank=False)
     git_repo = models.CharField(max_length=200, blank=False)
+    description = models.TextField(max_length=200, blank=True)
 
     def __str__(self):
         return self.name
@@ -17,6 +18,12 @@ class ObservedProject(models.Model):
 class Issue(models.Model):
     title = models.CharField(max_length=200, blank=False)
     project = models.ForeignKey(to=ObservedProject, null=False, on_delete=models.CASCADE)
+    description = models.TextField(max_length=200, blank=True)
+    state = models.CharField(
+        max_length=2,
+        choices=PROBLEM_STATE,
+        default=OPEN,
+    )
 
     def __str__(self):
         return self.title
@@ -36,7 +43,7 @@ class User(models.Model):
     def __str__(self):
         return self.name
 
-class Checkpoint(models.Model):
+class Milestone(models.Model):
     date = models.DateField()
     project = models.ForeignKey(to=ObservedProject, null=False, on_delete=models.CASCADE)
 
@@ -71,9 +78,9 @@ class StateChange(Event):
     def __str__(self):
         return self.newState
 
-class CheckpointChange(Event):
+class MilestoneChange(Event):
     description = models.CharField(max_length=200, blank=False)
-    checkpoint = models.ForeignKey(to=Checkpoint, null=False, on_delete=models.CASCADE)
+    checkpoint = models.ForeignKey(to=Milestone, null=False, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.description
