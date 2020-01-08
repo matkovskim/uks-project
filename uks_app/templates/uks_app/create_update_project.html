@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<div class='row'>
+    <div class = 'col-lg-8 m-auto'>
+        <h3>Create a new project</h3>
+
+        <hr>
+        
+        <form method='POST'> 
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button type="submit" class="btn btn-info">Confirm</button>
+            <a type="button" href="../" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
