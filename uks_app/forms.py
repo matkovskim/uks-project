@@ -10,3 +10,11 @@ class ProjectForm(forms.ModelForm):
             'git_repo',
             'description',
         ]
+
+class IssueForm(forms.ModelForm):
+    class Meta:
+        model = Issue
+        fields = [
+            'title',
+            'description'
+        ]
