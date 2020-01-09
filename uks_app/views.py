@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 
 from .models import ObservedProject, Issue
-from .forms import ProjectForm
+from .forms import ProjectForm, IssueForm
 
 # home page
 def index(request):
@@ -34,10 +34,65 @@ def create_update_project(request, project_id=None):
 
     return render(request, 'uks_app/create_update_project.html', context)
 
+# new issue form
+def create_update_issue(request, project_id, issue_id=None):
+
+    #get observed project
+    observed_project = get_object_or_404(ObservedProject, id=project_id)
+
+    #issue_id == None -> Create
+    #issue_id != None -> Update
+    observed_issue = get_object_or_404(Issue, pk=issue_id) if issue_id else None
+
+    form = IssueForm(request.POST or None, instance=observed_issue)
+
+    if form.is_valid():
+        issue = form.save(commit=False)
+        
+        #set project as foreign key
+        issue.project = observed_project
+        issue.save()
+        
+        if issue_id:
+            return HttpResponseRedirect('/project/' + str(project_id) + '/issue/' + str(issue_id) + '/')  
+        else:
+            return HttpResponseRedirect('/project/' + str(project_id) + '/issue/' + str(issue.id) + '/')  
+
+    context = {
+        'form' : form,
+    }
+
+    return render(request, 'uks_app/create_update_issue.html', context)
+
+#change issue state
+def change_issue_state(request, project_id, issue_id):
+
+    #get observed project
+    observed_project = get_object_or_404(ObservedProject, id=project_id)
+    
+    #get issue
+    observed_issue = get_object_or_404(Issue, id=issue_id)
+
+    if observed_issue.state == "OP":
+        observed_issue.state = "CL"
+    else:
+        observed_issue.state = "OP"
+    
+    observed_issue.save()
+
+    return HttpResponseRedirect('/project/' + str(project_id) + '/issue/' + str(issue_id) + '/')
+
 #delete project
 class ProjectDelete(DeleteView):
     template_name = 'uks_app/delete_project.html'
     model = ObservedProject
+
+    success_url = reverse_lazy('all_projects')
+
+#delete project
+class IssueDelete(DeleteView):
+    template_name = 'uks_app/delete_issue.html'
+    model = Issue
 
     success_url = reverse_lazy('all_projects')
 
@@ -53,3 +108,8 @@ class ProjectView(generic.ListView):
 class OneProjectView(generic.DetailView):
     model = ObservedProject
     template_name = 'uks_app/one_project.html'
+
+# one issue detailed view
+class OneIssueView(generic.DetailView):
+    model = Issue
+    template_name = 'uks_app/one_issue.html'
