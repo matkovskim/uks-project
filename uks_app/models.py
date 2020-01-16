@@ -44,7 +44,9 @@ class User(models.Model):
         return self.name
 
 class Milestone(models.Model):
+    title = models.CharField(max_length=200, blank=False)
     date = models.DateField()
+    description = models.TextField(max_length=200, blank=True)
     project = models.ForeignKey(to=ObservedProject, null=False, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -79,6 +81,8 @@ class StateChange(Event):
         return self.newState
 
 class MilestoneChange(Event):
+    title = models.CharField(max_length=200, blank=False)
+    date = models.DateField()
     description = models.CharField(max_length=200, blank=False)
     checkpoint = models.ForeignKey(to=Milestone, null=False, on_delete=models.CASCADE)
 

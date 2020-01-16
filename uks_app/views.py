@@ -4,8 +4,8 @@ from django.views import generic
 from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 
-from .models import ObservedProject, Issue
-from .forms import ProjectForm, IssueForm
+from .models import ObservedProject, Issue, Milestone
+from .forms import ProjectForm, IssueForm, MilestoneForm
 
 # home page
 def index(request):
@@ -113,3 +113,45 @@ class OneProjectView(generic.DetailView):
 class OneIssueView(generic.DetailView):
     model = Issue
     template_name = 'uks_app/one_issue.html'
+
+# one milestone detailed view
+class OneMilestoneView(generic.DetailView):
+    model = Milestone
+    template_name = 'uks_app/one_milestone.html'
+
+#delete milestone
+class MilestoneDelete(DeleteView):
+    template_name = 'uks_app/delete_issue.html'
+    model = Milestone
+
+    success_url = reverse_lazy('all_projects')
+
+# new milestone
+def create_update_milestone(request, project_id, milestone_id=None):
+
+    #get observed project
+    observed_project = get_object_or_404(ObservedProject, id=project_id)
+
+    #milestone_id == None -> Create
+    #milestone_id != None -> Update
+    observed_milestone = get_object_or_404(Milestone, pk=milestone_id) if milestone_id else None
+
+    form = MilestoneForm(request.POST or None, instance=observed_milestone)
+
+    if form.is_valid():
+        milestone = form.save(commit=False)
+        
+        #set project as foreign key
+        milestone.project = observed_project
+        milestone.save()
+        
+        if milestone_id:
+            return HttpResponseRedirect('/project/' + str(project_id) + '/milestone/' + str(milestone_id) + '/')  
+        else:
+            return HttpResponseRedirect('/project/' + str(project_id) + '/milestone/' + str(milestone.id) + '/')  
+
+    context = {
+        'form' : form,
+    }
+
+    return render(request, 'uks_app/create_update_milestone.html', context)
