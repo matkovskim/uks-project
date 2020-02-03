@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,24 +21,42 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav ml-auto">
+                <ul class="navbar-nav mr-auto">
                     <li class="nav-item active">
                         <a class="nav-link" href="{% url 'index' %}">Home</a>
                     </li>
                     <li class="nav-item active">
                         <a class="nav-link" href="{% url 'all_projects' %}">Projects</a>
                     </li>
-                    <li class="nav-item active">
-                        <a class="nav-link" href="{% url 'all_projects' %}">Sign in</a>
-                    </li>
-                    <li class="nav-item active">
-                        <a class="btn btn-md btn-outline-light" href="{% url 'all_projects' %}">Sign up</a>
-                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item active ml-2">
+                            <a class="btn btn-md btn-outline-light" href="{% url 'profile' user.username %}">Profile</a>
+                        </li>
+                        <li class="nav-item active ml-2">
+                            <a class="btn btn-md btn-outline-light" href="{% url 'logout' %}">Sign out</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item active ml-2">
+                            <a class="btn btn-md btn-outline-light" href="{% url 'register' %}">Sign up</a>
+                        </li>
+                        <li class="nav-item active ml-2">
+                            <a class="btn btn-md btn-outline-light" href="{% url 'login' %}">Sign in</a>
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
         </nav>
         <!-- page content -->
         <div style="margin-top: 30px; margin-bottom: 30px" class="container">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{message}}
+                    </div>
+                {% endfor %}
+            {% endif %}
             {% block content %} {% endblock %}
         </div>
         <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
