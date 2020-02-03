@@ -82,6 +82,14 @@ def change_issue_state(request, project_id, issue_id):
 
     return HttpResponseRedirect('/project/' + str(project_id) + '/issue/' + str(issue_id) + '/')
 
+#search projects from name
+def search_projects(request):
+    search_name = request.GET['search']
+    observed_projects = ObservedProject.objects.filter(name__icontains=search_name.lower()).filter(public = 'True')
+    issues_list =Issue.objects.filter(title__icontains=search_name.lower(), project__public='True')
+    print(issues_list)
+    return render(request, 'uks_app/search_result.html', {'observed_projects': observed_projects, 'issues_list':issues_list})
+
 #delete project
 class ProjectDelete(DeleteView):
     template_name = 'uks_app/delete_project.html'

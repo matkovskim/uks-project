@@ -11,6 +11,11 @@
         <!-- navigation bar -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <span class="navbar-brand mb-0 h1">InsertNameHere</span>
+            <form class="form-inline" type="get" action="{% url 'search' %}">
+                <input class="form-control mr-sm-2" type="text" name="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-md btn-outline-light" type="submit"><i class="fas fa-search text-white"
+                aria-hidden="true"></i></button>
+            </form>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>

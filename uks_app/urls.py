@@ -18,4 +18,8 @@ urlpatterns = [
     path('project/<int:project_id>/issue/<int:pk>/delete/', views.IssueDelete.as_view(), name='delete_issue'),
     path('project/<int:project_id>/issue/<int:issue_id>/edit/', views.create_update_issue, name='edit_issue'),
     path('project/<int:project_id>/issue/<int:issue_id>/changestate/', views.change_issue_state, name='change_state_issue'),
+
+    #search
+    path('search/', views.search_projects, name='search'),
+
 ]
