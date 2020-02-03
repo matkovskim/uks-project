@@ -6,6 +6,8 @@ from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.db.models import Q
 from .models import ObservedProject, Issue
 from .forms import ProjectForm, IssueForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm
 import logging
@@ -90,8 +92,8 @@ def search_projects(request):
     search_name = request.GET['search']
     observed_projects = ObservedProject.objects.filter(name__icontains=search_name.lower()).filter(public = 'True')
     issues_list =Issue.objects.filter(title__icontains=search_name.lower(), project__public='True')
-    print(issues_list)
-    return render(request, 'uks_app/search_result.html', {'observed_projects': observed_projects, 'issues_list':issues_list})
+    users_list=User.objects.filter(Q(first_name__icontains = search_name.lower()) | Q(last_name__icontains = search_name.lower()) | Q(username__icontains = search_name.lower()) & Q(is_staff='False'))
+    return render(request, 'uks_app/search_result.html', {'observed_projects': observed_projects, 'issues_list':issues_list, 'users_list':users_list})
 
 # user registration 
 def register_user(request):
