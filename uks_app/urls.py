@@ -21,6 +21,9 @@ urlpatterns = [
     path('project/<int:project_id>/issue/<int:issue_id>/edit/', views.create_update_issue, name='edit_issue'),
     path('project/<int:project_id>/issue/<int:issue_id>/changestate/', views.change_issue_state, name='change_state_issue'),
 
+    #search
+    path('search/', views.search_projects, name='search'),
+
     #users
     path('register/', views.register_user, name="register"),
     path('logout/', auth_views.LogoutView.as_view(template_name = 'uks_app/logout.html'), name="logout"),

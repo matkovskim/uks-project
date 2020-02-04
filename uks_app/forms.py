@@ -5,13 +5,19 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
 class ProjectForm(forms.ModelForm):
+    
     class Meta:
+        labels = {
+            "public": "Make this repository public"
+        }
         model = ObservedProject
         fields = [
             'name',
             'git_repo',
             'description',
+            'public'
         ]
+        
 
 class IssueForm(forms.ModelForm):
     class Meta:

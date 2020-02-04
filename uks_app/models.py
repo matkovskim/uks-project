@@ -14,6 +14,7 @@ class ObservedProject(models.Model):
     name = models.CharField(max_length=200, blank=False)
     git_repo = models.CharField(max_length=200, blank=False)
     description = models.TextField(max_length=200, blank=True)
+    public=models.BooleanField(default=True)
 
     def __str__(self):
         return self.name

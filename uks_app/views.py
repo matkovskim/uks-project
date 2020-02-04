@@ -6,6 +6,8 @@ from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.db.models import Q
 from .models import ObservedProject, Issue
 from .forms import ProjectForm, IssueForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm
 import logging
@@ -85,6 +87,14 @@ def change_issue_state(request, project_id, issue_id):
 
     return HttpResponseRedirect('/project/' + str(project_id) + '/issue/' + str(issue_id) + '/')
 
+#search projects from name
+def search_projects(request):
+    search_name = request.GET['search']
+    observed_projects = ObservedProject.objects.filter(name__icontains=search_name.lower()).filter(public = 'True')
+    issues_list =Issue.objects.filter(title__icontains=search_name.lower(), project__public='True')
+    users_list=User.objects.filter(Q(first_name__icontains = search_name.lower()) | Q(last_name__icontains = search_name.lower()) | Q(username__icontains = search_name.lower()) & Q(is_staff='False'))
+    return render(request, 'uks_app/search_result.html', {'observed_projects': observed_projects, 'issues_list':issues_list, 'users_list':users_list})
+
 # user registration 
 def register_user(request):
     if request.method == 'POST':
@@ -131,7 +141,6 @@ def profile_update(request, id=None):
         'p_form' : p_form
     }
     return render(request, 'uks_app/profile_update.html', context)
-
 
 #delete project
 class ProjectDelete(DeleteView):
