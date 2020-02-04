@@ -29,6 +29,17 @@
 
 <hr>
 
-<p>TO DO: Additional details about this issue</p>
+{% if object.milestonechange_set.all %}
+
+    {% for milestone_change in object.milestonechange_set.all %}
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <p class="ml-auto">Change date: {{milestone_change.time}}</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
 
 {% endblock %}

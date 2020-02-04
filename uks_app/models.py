@@ -48,13 +48,14 @@ class Milestone(models.Model):
     date = models.DateField()
     description = models.TextField(max_length=200, blank=True)
     project = models.ForeignKey(to=ObservedProject, null=False, on_delete=models.CASCADE)
-
+ 
     def __str__(self):
         return str(self.date)
-
+ 
 class Event(models.Model):
     time = models.DateField()
     user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE)
+    issue = models.ForeignKey(to=Issue, null=False, on_delete=models.CASCADE)
 
 class Comment(Event):
     description = models.CharField(max_length=200, blank=False)
@@ -81,13 +82,7 @@ class StateChange(Event):
         return self.newState
 
 class MilestoneChange(Event):
-    title = models.CharField(max_length=200, blank=False)
-    date = models.DateField()
-    description = models.CharField(max_length=200, blank=False)
     checkpoint = models.ForeignKey(to=Milestone, null=False, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.description
 
 class ResponsibleUserChange(Event):
     responsibleUser = models.ForeignKey(to=User, null=False, on_delete=models.CASCADE)
