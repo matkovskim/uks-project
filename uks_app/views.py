@@ -1,14 +1,20 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseRedirect, HttpResponse
+from django.contrib.auth.models import User
 from django.views import generic
 from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 
 from .models import ObservedProject, Issue, Milestone
 from .forms import ProjectForm, IssueForm, MilestoneForm
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from .forms import ProjectForm, IssueForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm
+import logging
 
 # home page
-def index(request):
+def index(request): 
     return render(request, 'uks_app/index.html') #optional third argument context
 
 # new project form
@@ -22,7 +28,7 @@ def create_update_project(request, project_id=None):
 
     if form.is_valid():
         form.save()
-        
+         
         if project_id:
             return HttpResponseRedirect('/project/' + str(project_id) + '/')  
         else:
@@ -81,6 +87,61 @@ def change_issue_state(request, project_id, issue_id):
     observed_issue.save()
 
     return HttpResponseRedirect('/project/' + str(project_id) + '/issue/' + str(issue_id) + '/')
+
+#search projects from name
+def search_projects(request):
+    search_name = request.GET['search']
+    observed_projects = ObservedProject.objects.filter(name__icontains=search_name.lower()).filter(public = 'True')
+    issues_list =Issue.objects.filter(title__icontains=search_name.lower(), project__public='True')
+    users_list=User.objects.filter(Q(first_name__icontains = search_name.lower()) | Q(last_name__icontains = search_name.lower()) | Q(username__icontains = search_name.lower()) & Q(is_staff='False'))
+    return render(request, 'uks_app/search_result.html', {'observed_projects': observed_projects, 'issues_list':issues_list, 'users_list':users_list})
+
+# user registration 
+def register_user(request):
+    if request.method == 'POST':
+        form = UserRegisterForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Your account has been created! You are able to log in now!')
+            return redirect('login')
+    else:
+        form = UserRegisterForm()
+    return render(request, "uks_app/register.html", {'form' : form})
+
+# user profile
+def profile(request, id=None):
+    selected_user = get_object_or_404(User, username=id)
+    projects = ObservedProject.objects.filter(user=selected_user)
+    update_possible = selected_user == request.user
+    print(update_possible)
+    context = {"selected_user": selected_user, 'projects' : projects, 'update_possible' : update_possible}
+    return render(request, 'uks_app/profile.html', context)
+
+# user profile update
+@login_required
+def profile_update(request, id=None):
+    selected_user = get_object_or_404(User, username=id)
+
+    if request.user != selected_user:
+        return HttpResponse('Unauthorized', status=401)
+
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=selected_user)
+        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=selected_user.profile)
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+            messages.success(request, f'Your account has been updated!')
+            return redirect('profile', selected_user.username)
+    else:
+        u_form = UserUpdateForm(instance=selected_user)
+        p_form = ProfileUpdateForm(instance=selected_user.profile)
+
+    context = {
+        'u_form' : u_form,
+        'p_form' : p_form
+    }
+    return render(request, 'uks_app/profile_update.html', context)
 
 #delete project
 class ProjectDelete(DeleteView):
