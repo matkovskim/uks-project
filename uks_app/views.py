@@ -20,6 +20,8 @@ def index(request):
 @login_required
 def create_update_project(request, project_id=None):
 
+    user = request.user
+
     #project_id == None -> Create
     #project_id != None -> Update
     observed_project = get_object_or_404(ObservedProject, pk=project_id) if project_id else None
@@ -27,8 +29,11 @@ def create_update_project(request, project_id=None):
     form = ProjectForm(request.POST or None, instance=observed_project)
 
     if form.is_valid():
-        project = form.save()
-        
+        project = form.save(commit=False)
+
+        project.user = user
+        project.save()
+
         if project_id:
             return HttpResponseRedirect('/project/' + str(project_id) + '/')  
         else:
@@ -75,6 +80,7 @@ def create_update_issue(request, project_id, issue_id=None):
     return render(request, 'uks_app/create_update_issue.html', context)
 
 # new label form
+@login_required
 def create_label(request, issue_id):
 
     #get issue
@@ -98,6 +104,7 @@ def create_label(request, issue_id):
     return render(request, 'uks_app/create_label.html', context)
 
 # choose label
+@login_required
 def choose_label(request, issue_id):
 
     #get issue and project
@@ -144,7 +151,7 @@ def change_issue_state(request, project_id, issue_id):
 
     return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
 
-
+@login_required
 def remove_label(request, label_id, issue_id):
 
     #get issue
