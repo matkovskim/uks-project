@@ -1,14 +1,33 @@
-h5 a:visited {
-    color: #35A0A5;
-    background-color: red;
+a:visited.blue-link {
+    color: #17a2b8;
 }
 
-h5 a:link {
-    color: #35A0A5;
-    background-color: red;
+a:link.blue-link {
+    color: #17a2b8;
 }
 
-.backg {
-    background-color: red;
-
+a:visited.black-link {
+    color: #000000;
 }
+
+a:link.black-link {
+    color: #000000;
+}
+
+a:hover.black-link {
+    color: #17a2b8;
+    text-decoration: none;
+}
+
+a:link.tab-link {
+    color: #252525;
+}
+
+a:link.tab-link.active {
+    color: #17a2b8;
+}
+
+.center-confirmation {
+    margin: auto;
+    width: 50%;
+  }

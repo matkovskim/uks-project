@@ -16,7 +16,7 @@ urlpatterns = [
 
     #issues
     path('project/<int:project_id>/issue/new/', views.create_update_issue, name='new_issue'),
-    path('project/<int:project_id>/issue/<int:pk>/', views.OneIssueView.as_view(), name='one_issue'),
+    path('issue/<int:pk>/', views.OneIssueView.as_view(), name='one_issue'),
     path('project/<int:project_id>/issue/<int:pk>/delete/', views.IssueDelete.as_view(), name='delete_issue'),
     path('project/<int:project_id>/issue/<int:issue_id>/edit/', views.create_update_issue, name='edit_issue'),
     path('project/<int:project_id>/issue/<int:issue_id>/changestate/', views.change_issue_state, name='change_state_issue'),
@@ -26,7 +26,13 @@ urlpatterns = [
     path('project/<int:project_id>/milestone/<int:pk>/', views.OneMilestoneView.as_view(), name='one_milestone'),
     path('project/<int:project_id>/milestone/<int:pk>/delete/', views.MilestoneDelete.as_view(), name='delete_milestone'),
     path('project/<int:project_id>/milestone/<int:milestone_id>/edit/', views.create_update_milestone, name='edit_milestone'),
-]
+
+    #labels
+    path('issue/<int:issue_id>/label/new', views.create_label, name='new_label'),
+    path('issue/<int:issue_id>/label/choose', views.choose_label, name='choose_label'),
+    path('issue/<int:issue_id>/label/<int:label_id>/delete', views.remove_label, name='remove_label'),
+
+
     #search
     path('search/', views.search_projects, name='search'),
 
@@ -44,3 +50,4 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

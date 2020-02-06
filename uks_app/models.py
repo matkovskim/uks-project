@@ -35,7 +35,7 @@ class Issue(models.Model):
 class Label(models.Model):
     name = models.CharField(max_length=200, blank=False)
     color = models.CharField(max_length=200, blank=False)
-    project = models.ForeignKey(to=ObservedProject, null=True, on_delete=models.SET_NULL)
+    issue = models.ManyToManyField(Issue, related_name='labels')
 
     def __str__(self):
         return self.name

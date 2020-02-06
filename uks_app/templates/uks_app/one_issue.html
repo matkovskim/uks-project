@@ -2,22 +2,22 @@
 
 {% block content %}
 
-<h3 style="margin-bottom: 20px">{{object.title}}
+<h3 class="mb-3">{{object.title}}
     <span style="float: right;">
-        <a href="{% url 'one_project' object.project.id %}" class="btn btn-secondary"><i style="margin-right: 10px" class="fas fa-arrow-circle-left"></i>Return to project</a>
+        <a href="{% url 'one_project' object.project.id %}" class="btn btn-secondary"><i class="fas fa-arrow-circle-left mr-2"></i>Return to project</a>
     </span>
 </h3>
 
-<h6 style="margin-bottom: 50px">{{object.description}}
-    <span style="float: right;">
-        <a href="{% url 'edit_issue' object.project.id object.id %}" class="btn btn-info"><i style="margin-right: 10px" class="fas fa-edit"></i>Edit</a>
-        {% if object.state == "OP" %}
-            <a href="{% url 'change_state_issue' object.project.id object.id %}" class="btn btn-secondary"><i style="margin-right: 10px" class="fas fa-times-circle"></i>Close</a>
-        {% else %}
-            <a href="{% url 'change_state_issue' object.project.id object.id %}" class="btn btn-info"><i style="margin-right: 10px" class="fas fa-exclamation-circle"></i>Reopen</a>
-        {% endif %}
-        <a href="{% url 'delete_issue' object.project.id object.id %}" class="btn btn-secondary"><i style="margin-right: 10px" class="fas fa-trash-alt"></i>Delete</a>
-    </span>
+<h6 class="mb-4">{{object.description}}
+        <span style="float: right;">
+            {% if object.state == "OP" %}
+                <a href="{% url 'change_state_issue' object.project.id object.id %}" class="btn btn-secondary" data-toggle="tooltip" data-placement="bottom" title="Close issue"><i class="fas fa-times-circle"></i></a>
+            {% else %}
+                <a href="{% url 'change_state_issue' object.project.id object.id %}" class="btn btn-info" data-toggle="tooltip" data-placement="bottom" title="Reopen issue"><i class="fas fa-exclamation-circle"></i></a>
+            {% endif %}
+                    <a href="{% url 'edit_issue' object.project.id object.id %}" class="btn btn-info" data-toggle="tooltip" data-placement="bottom" title="Edit issue"><i class="fas fa-edit"></i></a>
+            <a href="{% url 'delete_issue' object.project.id object.id %}" class="btn btn-secondary"><i class="fas fa-trash-alt" data-toggle="tooltip" data-placement="bottom" title="Delete issue"></i></a>
+        </span>
 </h6>
 
 <h6>
@@ -41,5 +41,44 @@
     </div>
     {% endfor %}
 {% endif %}
+
+<div class="row mt-2">
+    <!-- main part -->
+    <div class="col-9">
+        <p>Comments and stuff</p>
+    </div>
+    
+    <!-- side part -->
+    <div class="col-3">
+        <p>Assignee</p>
+        <p style="font-size:x-small"><i style="margin-right: 10px; margin-top: 6px;" class="fas fa-user-secret"></i>Vesna Milic</p>
+        
+        <hr>
+
+        <p>Labels
+        {% if user.is_authenticated %}
+            <span style="float: right;"> 
+                <a href="{% url 'choose_label' issue.id %}"><i style="margin-top: 6px; color:#17a2b8" class="fas fa-plus"></i></a></p>
+            </span>
+        {% endif %}
+        {% if  issue.labels.all %}
+            <p style="font-size:x-small">
+                {% for label in issue.labels.all %}
+                    <i style="margin-right: 10px; margin-top: 6px; color: {{label.color}}" class="fas fa-tag"></i>{{label.name}} 
+                    {% if user.is_authenticated %}
+                        <a class="black-link" style="float: right;" href="{% url 'remove_label' issue.id label.id %}"><i style="margin-top: 6px;" class="fas fa-times"></i></a>
+                    {% endif %}
+                    </br>
+                {% endfor %}            
+            </p>
+        {% else %}
+            <p style="font-size:x-small">There are currently no labels.</p>
+        {% endif %}
+
+        <hr>
+
+        <p>Milestones</p>
+    </div>
+</div>
 
 {% endblock %}

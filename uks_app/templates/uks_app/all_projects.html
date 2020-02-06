@@ -1,25 +1,21 @@
 {% extends 'base.html' %}
 
-{% load static %}
-
-<link rel="stylesheet" type="text/css" href="{% static 'uks_app/style.css' %}">
-
 {% block content %}
-    <h3 style="margin-top:50px" >
+    <h3 class="mt-4" >
       Projects
-      <span style="float: right;"><a href="{% url 'new_project' %}" class="btn btn-info"><i style="margin-right: 10px" class="fas fa-folder-plus"></i> New project</a></span>
+      <span style="float: right;"><a href="{% url 'new_project' %}" class="btn btn-info"><i class="fas fa-folder-plus mr-1"></i> New project</a></span>
     </h3>
 
     <hr>
 
     {% if project_list %}
-        <div class="row backg" style="margin-top: 50px;">
+        <div class="row backg mt-4">
             <!-- list of all projects -->
             {% for project in project_list %}
-                <div class="col-lg-6" style="margin-bottom: 10px;">
+                <div class="col-lg-6 mb-2">
                     <div class="card text-center">
                         <div class="card-header">
-                            <h5><a href="{% url 'one_project' project.id %}">{{project.name}}</a></h5>
+                            <h5><a class="blue-link" href="{% url 'one_project' project.id %}">{{project.name}}</a></h5>
                             <h6>{{project.git_repo}}</h6>
                         </div>
                         <div class="card-body">
