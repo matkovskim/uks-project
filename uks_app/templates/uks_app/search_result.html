@@ -69,7 +69,7 @@
                                     {% else %}
                                         <i style="margin-right: 10px; margin-top: 8px; color: red" class="fas fa-exclamation-circle"></i>
                                     {% endif %}
-                                    <h5 class="card-title"><a href="{% url 'one_issue' issue.project.id issue.id %}">{{issue.title}}</a></h5>
+                                    <h5 class="card-title"><a href="{% url 'one_issue' issue.id %}">{{issue.title}}</a></h5>
                                 </div>
                                 <div class="row">
                                     <i style="margin-right: 10px; margin-top: 8px; color: white" class="fas fa-ellipsis-h"></i>
@@ -79,7 +79,7 @@
                         </div>
                     {% endfor %}
                 {% else %}
-                    <p>There are no issues for this project.</p>
+                    <p>There are no issues available.</p>
                 {% endif %}
             </div>
         </div>
@@ -111,7 +111,7 @@
                         </div>
                     {% endfor %}
                 {% else %}
-                    <p>There are no user.</p>
+                    <p>There are no users.</p>
                 {% endif %}
             </div>
         </div>

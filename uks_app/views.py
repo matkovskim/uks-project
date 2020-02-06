@@ -1,23 +1,26 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseRedirect, HttpResponse
-from django.contrib.auth.models import User
 from django.views import generic
 from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
+from .models import ObservedProject, Issue, Label
+from .forms import ProjectForm, IssueForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm
+import logging
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q
-from .models import ObservedProject, Issue
-from .forms import ProjectForm, IssueForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm
-import logging
+
 
 # home page
 def index(request):
     return render(request, 'uks_app/index.html') #optional third argument context
 
 # new project form
+@login_required
 def create_update_project(request, project_id=None):
+
+    user = request.user
 
     #project_id == None -> Create
     #project_id != None -> Update
@@ -26,8 +29,11 @@ def create_update_project(request, project_id=None):
     form = ProjectForm(request.POST or None, instance=observed_project)
 
     if form.is_valid():
-        form.save()
-        
+        project = form.save(commit=False)
+
+        project.user = user
+        project.save()
+
         if project_id:
             return HttpResponseRedirect('/project/' + str(project_id) + '/')  
         else:
@@ -59,15 +65,73 @@ def create_update_issue(request, project_id, issue_id=None):
         issue.save()
         
         if issue_id:
-            return HttpResponseRedirect('/project/' + str(project_id) + '/issue/' + str(issue_id) + '/')  
+            return HttpResponseRedirect('/issue/' + str(issue_id) + '/')  
         else:
-            return HttpResponseRedirect('/project/' + str(project_id) + '/issue/' + str(issue.id) + '/')  
+            return HttpResponseRedirect('/issue/' + str(issue.id) + '/')  
+
+    cancel_url = "../../../../../issue/"+str(issue_id) if issue_id else "../../"
+
+    
+    context = {
+        'form' : form,
+        'cancel_url': cancel_url
+    }
+
+    return render(request, 'uks_app/create_update_issue.html', context)
+
+# new label form
+@login_required
+def create_label(request, issue_id):
+
+    #get issue
+    observed_issue = get_object_or_404(Issue, pk=issue_id)
+
+    form = LabelForm(request.POST or None)
+
+    if form.is_valid():
+        label = form.save(commit=True)
+        
+        #set issue as foreign key
+        label.issue.add(observed_issue)
+        label.save()
+        
+        return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
 
     context = {
         'form' : form,
     }
 
-    return render(request, 'uks_app/create_update_issue.html', context)
+    return render(request, 'uks_app/create_label.html', context)
+
+# choose label
+@login_required
+def choose_label(request, issue_id):
+
+    #get issue and project
+    observed_issue = get_object_or_404(Issue, pk=issue_id)
+    observed_project = observed_issue.project
+
+    project_issues = observed_project.issue_set.exclude(id=issue_id)
+
+    form = ChooseLabelForm(project_issues, observed_issue, data=request.POST or None)
+
+    if form.is_valid():
+    
+        chosen_labels = form.cleaned_data['labels']
+        
+        for label in chosen_labels:
+            label.issue.add(observed_issue)
+            label.save()
+        
+        return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
+
+    context = {
+        'form' : form,
+        'issue' : observed_issue
+    }
+
+    return render(request, 'uks_app/choose_label.html', context)
+
 
 #change issue state
 def change_issue_state(request, project_id, issue_id):
@@ -85,7 +149,23 @@ def change_issue_state(request, project_id, issue_id):
     
     observed_issue.save()
 
-    return HttpResponseRedirect('/project/' + str(project_id) + '/issue/' + str(issue_id) + '/')
+    return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
+
+@login_required
+def remove_label(request, label_id, issue_id):
+
+    #get issue
+    issue = get_object_or_404(Issue, id=issue_id)
+
+    #get label
+    label = get_object_or_404(Label, id=label_id)
+
+    issue.labels.remove(label)
+
+    if label.issue.count() <= 0:
+        label.delete()
+
+    return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
 
 #search projects from name
 def search_projects(request):
@@ -149,12 +229,14 @@ class ProjectDelete(DeleteView):
 
     success_url = reverse_lazy('all_projects')
 
-#delete project
+#delete issue
 class IssueDelete(DeleteView):
     template_name = 'uks_app/delete_issue.html'
     model = Issue
 
-    success_url = reverse_lazy('all_projects')
+    def get_success_url(self):
+        project = self.object.project
+        return reverse_lazy( 'one_project', kwargs={'pk': project.id})
 
 # all projects view
 class ProjectView(generic.ListView):
