@@ -1,11 +1,14 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.views import generic
 from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 
-from .models import ObservedProject, Issue
-from .forms import ProjectForm, IssueForm
+from .models import ObservedProject, Issue, Comment
+from .forms import ProjectForm, IssueForm, CommentForm
+
+from datetime import datetime
+
 
 # home page
 def index(request):
@@ -113,3 +116,43 @@ class OneProjectView(generic.DetailView):
 class OneIssueView(generic.DetailView):
     model = Issue
     template_name = 'uks_app/one_issue.html'
+
+
+# new comment form
+def create_update_comment(request, issue_id, comment_id=None):
+
+    #get issue
+    observed_issue = get_object_or_404(Issue, id=issue_id)
+    #comment_id == None -> Create
+    #comment_id != None -> Update
+    observed_comment = get_object_or_404(Comment, pk=comment_id) if comment_id else None
+
+    form = CommentForm(request.POST or None, instance=observed_comment)
+
+    if form.is_valid():
+        comment = form.save(commit=False)
+        
+        #set issue as foreign key
+        comment.issue = observed_issue
+        comment.time = datetime.now()
+        comment.save()
+        
+        if comment_id:
+            return HttpResponseRedirect('/project/' + str(observed_issue.project_id) + '/issue/' + str(issue_id) + '/')  
+        else:
+            return HttpResponseRedirect('/project/' + str(observed_issue.project_id) + '/issue/' + str(issue_id) + '/')  
+
+    context = {
+        'form' : form,
+    }
+
+    return render(request, 'uks_app/create_update_comment.html', context)
+
+# delete comment 
+def comment_delete_view(request, issue_id, comment_id):
+     #get issue
+    observed_issue = get_object_or_404(Issue, id=issue_id)   
+    observed_comment = get_object_or_404(Comment, id=comment_id)
+    print('Comment for deleting: ', observed_comment)
+    observed_comment.delete()
+    return HttpResponseRedirect('/project/' + str(observed_issue.project_id) + '/issue/' + str(issue_id) + '/')  

@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import ObservedProject, Issue
+from .models import ObservedProject, Issue, Comment
 
 class ProjectForm(forms.ModelForm):
     class Meta:
@@ -17,4 +17,12 @@ class IssueForm(forms.ModelForm):
         fields = [
             'title',
             'description'
+        ]
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = [
+            'description',
+            'user'
         ]

@@ -51,11 +51,12 @@ class Milestone(models.Model):
         return str(self.date)
 
 class Event(models.Model):
-    time = models.DateField()
+    time = models.DateTimeField()
     user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE)
 
 class Comment(Event):
     description = models.CharField(max_length=200, blank=False)
+    issue = models.ForeignKey(to=Issue, null=False, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.description
