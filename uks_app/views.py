@@ -4,13 +4,13 @@ from django.views import generic
 from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 
-from .models import ObservedProject, Issue, Milestone, Label
-from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm
+from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User
+from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm
 import logging
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-
+import datetime
 
 # home page
 def index(request): 
@@ -19,7 +19,7 @@ def index(request):
 # new project form
 @login_required
 def create_update_project(request, project_id=None):
-
+ 
     user = request.user
 
     #project_id == None -> Create
@@ -29,10 +29,9 @@ def create_update_project(request, project_id=None):
     form = ProjectForm(request.POST or None, instance=observed_project)
 
     if form.is_valid():
-        form.save()
          
-        project = form.save(commit=False)
-
+        project = form.save(commit=False) 
+ 
         project.user = user
         project.save()
 
@@ -258,6 +257,11 @@ class OneIssueView(generic.DetailView):
     model = Issue
     template_name = 'uks_app/one_issue.html'
 
+    def get_context_data(self, **kwargs):
+        context = super(OneIssueView, self).get_context_data(**kwargs)
+        context['milestone_events'] = MilestoneChange.objects.filter(issue_id=self.kwargs.get('pk')).order_by('-time')
+        return context
+
 # one milestone detailed view
 class OneMilestoneView(generic.DetailView):
     model = Milestone
@@ -299,3 +303,54 @@ def create_update_milestone(request, project_id, milestone_id=None):
     }
 
     return render(request, 'uks_app/create_update_milestone.html', context)
+
+# choose label
+@login_required
+def choose_milestone(request, issue_id):
+
+    
+    #get issue and project
+    observed_issue = get_object_or_404(Issue, pk=issue_id)
+    observed_project = observed_issue.project
+
+    form = ChooseMilestoneForm(observed_project, observed_issue, data=request.POST or None)
+
+    user = request.user
+
+    if form.is_valid():
+    
+        chosen_milestones = form.cleaned_data['milestones']
+        
+        for milestone in chosen_milestones:
+            milestone_change = MilestoneChange.objects.create(time = datetime.datetime.now(), user = user, issue = observed_issue, checkpoint=milestone, add=True) 
+            milestone_change.save()
+            #observed_issue.milestonechanges.add(milestone_change)
+            #observed_issue.save()
+
+            milestone.issue.add(observed_issue)
+            milestone.save()
+        
+        return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
+
+    context = { 
+         'form' : form,
+         'issue' : observed_issue
+    }
+
+    return render(request, 'uks_app/choose_milestone.html', context)
+
+@login_required
+def remove_milestone(request, milestone_id, issue_id):
+
+    #get issue
+    issue = get_object_or_404(Issue, id=issue_id)
+
+    #get milestone
+    milestone = get_object_or_404(Milestone, id=milestone_id)
+
+    issue.milestones.remove(milestone)
+
+    user = request.user
+    milestone_change = MilestoneChange.objects.create(time = datetime.datetime.now(), user = user, issue = issue, checkpoint=milestone, add=False) 
+
+    return HttpResponseRedirect('/issue/' + str(issue_id) + '/') 

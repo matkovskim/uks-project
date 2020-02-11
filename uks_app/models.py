@@ -43,15 +43,16 @@ class Label(models.Model):
 
 class Milestone(models.Model):
     title = models.CharField(max_length=200, blank=False)
-    date = models.DateField()
+    date = models.DateTimeField()
     description = models.TextField(max_length=200, blank=True)
     project = models.ForeignKey(to=ObservedProject, null=False, on_delete=models.CASCADE)
- 
+    issue = models.ManyToManyField(Issue, related_name='milestones')
+
     def __str__(self):
-        return str(self.date)
+        return str(self.title)
  
 class Event(models.Model):
-    time = models.DateField()
+    time = models.DateTimeField()
     user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE)
     issue = models.ForeignKey(to=Issue, null=False, on_delete=models.CASCADE)
 
@@ -80,6 +81,7 @@ class StateChange(Event):
         return self.newState
 
 class MilestoneChange(Event):
+    add = models.BooleanField()
     checkpoint = models.ForeignKey(to=Milestone, null=False, on_delete=models.CASCADE)
 
 class ResponsibleUserChange(Event):

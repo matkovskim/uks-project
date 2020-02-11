@@ -36,6 +36,23 @@ class MilestoneForm(forms.ModelForm):
             'date',
             'description'
         ]
+
+    def __init__(self, *args, **kwargs):
+        super(MilestoneForm, self).__init__(*args, **kwargs)
+        self.fields['date'].widget.attrs['class'] = 'datepicker'
+
+class ChooseMilestoneForm(forms.Form): 
+
+    def __init__(self, project, observed_issue, *args, **kwargs):
+        super(ChooseMilestoneForm, self).__init__(*args, **kwargs)
+
+        milestones = Milestone.objects.filter(project = project).exclude(id__in=[milestone.id for milestone in observed_issue.milestones.all()]).all()
+
+        self.fields['milestones'] = forms.ModelMultipleChoiceField(queryset=milestones) 
+
+    def save(self, commit=True):
+        print(self.fields['milestones'])
+
 class LabelForm(forms.ModelForm):
     class Meta:
         model = Label

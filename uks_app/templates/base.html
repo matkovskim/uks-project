@@ -9,6 +9,7 @@
     <script src="https://kit.fontawesome.com/3d3fec3ac4.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="{% static 'uks_app/static.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css">
     <title>{% block title %} {% endblock %}</title>
     <body>
         <!-- navigation bar -->
@@ -67,6 +68,18 @@
         <script>
             $(document).ready(function(){
                 $('[data-toggle="tooltip"]').tooltip();   
+            });
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+        <script type="text/javascript">
+            $(function () {
+                $('.datepicker').datetimepicker(
+                {
+                    format: 'YYYY-MM-DD HH:mm:ss',
+                    sideBySide: true
+                }
+                );
             });
         </script>
     </body>
