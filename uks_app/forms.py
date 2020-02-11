@@ -1,6 +1,7 @@
 from django import forms
+
+from .models import ObservedProject, Issue, Profile, Milestone, Label
 from django.forms.widgets import TextInput
-from .models import ObservedProject, Issue, Label, Profile
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
@@ -26,6 +27,31 @@ class IssueForm(forms.ModelForm):
             'title',
             'description'
         ]
+
+class MilestoneForm(forms.ModelForm):
+    class Meta:
+        model = Milestone
+        fields = [
+            'title',
+            'date',
+            'description'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(MilestoneForm, self).__init__(*args, **kwargs)
+        self.fields['date'].widget.attrs['class'] = 'datepicker'
+
+class ChooseMilestoneForm(forms.Form): 
+
+    def __init__(self, project, observed_issue, *args, **kwargs):
+        super(ChooseMilestoneForm, self).__init__(*args, **kwargs)
+
+        milestones = Milestone.objects.filter(project = project).exclude(id__in=[milestone.id for milestone in observed_issue.milestones.all()]).all()
+
+        self.fields['milestones'] = forms.ModelMultipleChoiceField(queryset=milestones) 
+
+    def save(self, commit=True):
+        print(self.fields['milestones'])
 
 class LabelForm(forms.ModelForm):
     class Meta:

@@ -29,10 +29,30 @@
 
 <hr>
 
+
+
 <div class="row mt-2">
     <!-- main part -->
     <div class="col-9">
-        <p>Comments and stuff</p>
+        {% if milestone_events %}
+            {% for event in milestone_events %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <p>{{event.checkpoint.title}}
+                        {% if event.add %}
+                            <br>Milestone added!</p>
+                        {% else %}
+                            <br>Milestone removed!</p>
+                        {% endif %}
+                        <p class="ml-auto">User: {{event.user}}<br>Change date: {{event.time}}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <p>No changes</p>
+        {% endif %}
     </div>
     
     <!-- side part -->
@@ -64,7 +84,25 @@
 
         <hr>
 
-        <p>Milestones</p>
+        <p>Milestones
+        {% if user.is_authenticated %}
+        <span style="float: right;"> 
+            <a href="{% url 'choose_milestone' issue.id %}"><i style="margin-top: 6px; color:#17a2b8" class="fas fa-plus"></i></a></p>
+        </span>
+        {% endif %}
+        {% if  issue.milestones.all %}
+            <p style="font-size:x-small">
+                {% for milestone in issue.milestones.all %}
+                    <i style="margin-right: 10px; margin-top: 6px;" class="fas fa-check-circle"></i>{{milestone.title}} 
+                    {% if user.is_authenticated %}
+                        <a class="black-link" style="float: right;" href="{% url 'remove_milestone' issue.id milestone.id %}"><i style="margin-top: 6px;" class="fas fa-times"></i></a>
+                    {% endif %}
+                    </br>
+                {% endfor %}            
+            </p>
+        {% else %}
+            <p style="font-size:x-small">There are currently no milestones.</p>
+        {% endif %}
     </div>
 </div>
 

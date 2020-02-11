@@ -21,11 +21,20 @@ urlpatterns = [
     path('project/<int:project_id>/issue/<int:issue_id>/edit/', views.create_update_issue, name='edit_issue'),
     path('project/<int:project_id>/issue/<int:issue_id>/changestate/', views.change_issue_state, name='change_state_issue'),
 
+    #milestone
+    path('project/<int:project_id>/milestone/new/', views.create_update_milestone, name='new_milestone'),
+    path('project/<int:project_id>/milestone/<int:pk>/', views.OneMilestoneView.as_view(), name='one_milestone'),
+    path('project/<int:project_id>/milestone/<int:pk>/delete/', views.MilestoneDelete.as_view(), name='delete_milestone'),
+    path('project/<int:project_id>/milestone/<int:milestone_id>/edit/', views.create_update_milestone, name='edit_milestone'),
+
+    # issue milestone
+    path('issue/<int:issue_id>/milestone/choose', views.choose_milestone, name='choose_milestone'),
+    path('issue/<int:issue_id>/milestone/<int:milestone_id>/delete', views.remove_milestone, name='remove_milestone'),
+
     #labels
     path('issue/<int:issue_id>/label/new', views.create_label, name='new_label'),
     path('issue/<int:issue_id>/label/choose', views.choose_label, name='choose_label'),
     path('issue/<int:issue_id>/label/<int:label_id>/delete', views.remove_label, name='remove_label'),
-
 
     #search
     path('search/', views.search_projects, name='search'),
