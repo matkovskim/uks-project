@@ -64,9 +64,13 @@ class CommentChange(Event):
     def __str__(self):
         return self.newComment
 
-class CodeChange(Event):
-    url = models.URLField(max_length=100)
-
+class CodeChange(models.Model):
+    url = models.CharField(max_length=200, blank=False)
+    message = models.CharField(max_length=400)
+    project = models.ForeignKey(to=ObservedProject, null=False, on_delete=models.CASCADE)
+    user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE)
+    date_time = models.DateTimeField()
+    github_username = models.CharField(max_length=200, blank=False)
     def __str__(self):
         return self.url
 

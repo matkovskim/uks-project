@@ -8,8 +8,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Q
-from .models import ObservedProject, Issue
+from .models import ObservedProject, Issue, CodeChange
 from .forms import ProjectForm, IssueForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+import json
 import logging
 
 # home page
@@ -141,6 +144,39 @@ def profile_update(request, id=None):
         'p_form' : p_form
     }
     return render(request, 'uks_app/profile_update.html', context)
+
+#change code
+@require_http_methods(["POST"])
+@csrf_exempt
+def hook_receiver_view(request):
+    request_body_string = request.body.decode("utf-8")
+    data = json.loads(request_body_string)
+    commit_url=""
+    repository_url=""
+    message=""
+    try:
+        commits=data["commits"]
+        repository_url=data["repository"]["html_url"]
+        project= ObservedProject.objects.filter(git_repo = repository_url)
+        if len(project)!=0 :
+            for commit in commits:
+                commit_url=commit["url"]
+                message=commit["message"]
+                email=commit["author"]["email"]
+                username=commit["author"]["name"]
+                time=commit["timestamp"]
+                users=User.objects.filter(Q(email = email))
+                if len(users)==0:
+                    q = CodeChange.objects.create(url=commit_url, project=project.first(), message=message, date_time=time, github_username=username)
+                else:
+                    q = CodeChange.objects.create(url=commit_url, project=project.first(), message=message, user=users[0], date_time=time, github_username=username)
+
+            return HttpResponse('success')
+        else:
+            return HttpResponse('Project does not exist', status=400)
+
+    except Exception as e:
+        return HttpResponse('Data is not valid', status=400)
 
 #delete project
 class ProjectDelete(DeleteView):
