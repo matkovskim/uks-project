@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,38 +8,80 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <script src="https://kit.fontawesome.com/3d3fec3ac4.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="{% static 'uks_app/static.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css">
     <title>{% block title %} {% endblock %}</title>
     <body>
         <!-- navigation bar -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <span class="navbar-brand mb-0 h1">InsertNameHere</span>
+            <form class="form-inline" type="get" action="{% url 'search' %}">
+                <input class="form-control mr-sm-2" type="text" name="search" placeholder="Search" aria-label="Search">
+                <button class="btn btn-md btn-outline-light" type="submit"><i class="fas fa-search text-white"
+                aria-hidden="true"></i></button>
+            </form>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav ml-auto">
+                <ul class="navbar-nav mr-auto">
                     <li class="nav-item active">
                         <a class="nav-link" href="{% url 'index' %}">Home</a>
                     </li>
                     <li class="nav-item active">
                         <a class="nav-link" href="{% url 'all_projects' %}">Projects</a>
                     </li>
-                    <li class="nav-item active">
-                        <a class="nav-link" href="{% url 'all_projects' %}">Sign in</a>
-                    </li>
-                    <li class="nav-item active">
-                        <a class="btn btn-md btn-outline-light" href="{% url 'all_projects' %}">Sign up</a>
-                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item active ml-2">
+                            <a class="btn btn-md btn-outline-light" href="{% url 'profile' user.username %}">Profile</a>
+                        </li>
+                        <li class="nav-item active ml-2">
+                            <a class="btn btn-md btn-outline-light" href="{% url 'logout' %}">Sign out</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item active ml-2">
+                            <a class="btn btn-md btn-outline-light" href="{% url 'register' %}">Sign up</a>
+                        </li>
+                        <li class="nav-item active ml-2">
+                            <a class="btn btn-md btn-outline-light" href="{% url 'login' %}">Sign in</a>
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
         </nav>
         <!-- page content -->
         <div style="margin-top: 30px; margin-bottom: 30px" class="container">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{message}}
+                    </div>
+                {% endfor %}
+            {% endif %}
             {% block content %} {% endblock %}
         </div>
         <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
         <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+        <script>
+            $(document).ready(function(){
+                $('[data-toggle="tooltip"]').tooltip();   
+            });
+        </script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+        <script type="text/javascript">
+            $(function () {
+                $('.datepicker').datetimepicker(
+                {
+                    format: 'YYYY-MM-DD HH:mm:ss',
+                    sideBySide: true
+                }
+                );
+            });
+        </script>
     </body>
 </head>
 </html>

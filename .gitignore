@@ -4,3 +4,4 @@ geckodriver.log
 .vscode/
 assignments/
 .env
+venv/

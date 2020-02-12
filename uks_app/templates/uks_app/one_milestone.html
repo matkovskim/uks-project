@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h3 style="margin-bottom: 20px">{{object.title}}
+    <span style="float: right;">
+        <a href="{% url 'one_project' object.project.id %}" class="btn btn-secondary"><i style="margin-right: 10px"
+                class="fas fa-arrow-circle-left"></i>Return to project</a>
+    </span>
+</h3>
+
+<h6 style="margin-bottom: 50px">{{object.description}}
+    <span style="float: right;">
+        <a href="{% url 'edit_milestone' object.project.id object.id %}" class="btn btn-info"><i
+                style="margin-right: 10px" class="fas fa-edit"></i>Edit</a>
+        <a href="{% url 'delete_milestone' object.project.id object.id %}" class="btn btn-secondary"><i
+                style="margin-right: 10px" class="fas fa-trash-alt"></i>Delete</a>
+    </span>
+</h6>
+
+<hr>
+
+{% endblock %}

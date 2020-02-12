@@ -6,16 +6,21 @@
 
 <div class='row'>
     <div class = 'col-lg-8 m-auto'>
-        <h3>Create a new issue</h3>
-
+        <h4>Add a milestone</h4>
+        <p>Choose one or more milestone of this project</p>
+        
         <hr>
         
         <form method='POST'> 
             {% csrf_token %}
             {{ form|crispy }}
             <button type="submit" class="btn btn-info">Confirm</button>
-            <a type="button" href={{cancel_url}} class="btn btn-secondary">Cancel</a>
+            <a type="button" href="../" class="btn btn-secondary">Cancel</a>
+
+            {{form.errors}}
         </form>
+
     </div>
 </div>
+
 {% endblock %}
