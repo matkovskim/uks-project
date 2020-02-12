@@ -21,6 +21,12 @@ urlpatterns = [
     path('project/<int:project_id>/issue/<int:issue_id>/edit/', views.create_update_issue, name='edit_issue'),
     path('project/<int:project_id>/issue/<int:issue_id>/changestate/', views.change_issue_state, name='change_state_issue'),
 
+    #comments
+    path('issue/<int:issue_id>/comment/new/', views.create_update_comment, name='new_comment'),
+    path('issue/<int:issue_id>/comment/<int:comment_id>/edit/', views.create_update_comment, name='edit_comment'),
+    path('issue/<int:issue_id>/comment/<int:comment_id>/delete/', views.comment_delete_view, name='delete_comment'),
+    path('comment/<int:pk>/', views.OneCommentView.as_view(), name='one_comment'),
+
     #milestone
     path('project/<int:project_id>/milestone/new/', views.create_update_milestone, name='new_milestone'),
     path('project/<int:project_id>/milestone/<int:pk>/', views.OneMilestoneView.as_view(), name='one_milestone'),

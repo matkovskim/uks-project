@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import ObservedProject, Issue, Profile, Milestone, Label
+from .models import ObservedProject, Issue, Profile, Milestone, Label, Comment
 from django.forms.widgets import TextInput
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
@@ -26,6 +26,13 @@ class IssueForm(forms.ModelForm):
         fields = [
             'title',
             'description'
+        ]
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = [
+            'description',
         ]
 
 class MilestoneForm(forms.ModelForm):

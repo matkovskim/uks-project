@@ -4,8 +4,8 @@ from django.views import generic
 from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 
-from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User
-from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm
+from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange
+from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm, CommentForm
 import logging
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -259,7 +259,8 @@ class OneIssueView(generic.DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(OneIssueView, self).get_context_data(**kwargs)
-        context['milestone_events'] = MilestoneChange.objects.filter(issue_id=self.kwargs.get('pk')).order_by('-time')
+        context['events'] = Event.objects.filter(issue_id=self.kwargs.get('pk')).order_by('time')
+
         return context
 
 # one milestone detailed view
@@ -301,9 +302,8 @@ def create_update_milestone(request, project_id, milestone_id=None):
     context = {
         'form' : form,
     }
-
     return render(request, 'uks_app/create_update_milestone.html', context)
-
+    
 # choose label
 @login_required
 def choose_milestone(request, issue_id):
@@ -354,3 +354,74 @@ def remove_milestone(request, milestone_id, issue_id):
     milestone_change = MilestoneChange.objects.create(time = datetime.datetime.now(), user = user, issue = issue, checkpoint=milestone, add=False) 
 
     return HttpResponseRedirect('/issue/' + str(issue_id) + '/') 
+
+# new comment form
+@login_required
+def create_update_comment(request, issue_id, comment_id=None):
+    #get issue
+    observed_issue = get_object_or_404(Issue, id=issue_id)
+    #comment_id == None -> Create
+    #comment_id != None -> Update
+    observed_comment = get_object_or_404(Comment, pk=comment_id) if comment_id else None
+
+    initial = ''
+
+    if observed_comment:
+        initial = observed_comment.description
+
+        comment_changes = observed_comment.commentchange_set.all()
+        print(comment_changes)
+
+        if comment_changes:
+            initial = comment_changes.reverse()[0]
+
+    form = CommentForm(request.POST or None, instance=observed_comment, initial={'description': initial})
+    #form.fields["description"].initial = 'initialllll'
+
+    user = request.user
+
+    if form.is_valid():
+
+        if comment_id:
+            if (user == observed_comment.user):
+                comment = form.save(commit=False)
+                commentChange = CommentChange(comment = comment, newComment=comment.description, time = datetime.datetime.now())
+                commentChange.save()
+            else:
+                return HttpResponse('Unauthorized', status=401)
+        else:
+            comment = form.save(commit=False)            
+            #set issue as foreign key
+            comment.issue = observed_issue
+            comment.time = datetime.datetime.now()
+            comment.user = user
+            comment.save()
+        
+        return HttpResponseRedirect('/issue/' + str(issue_id) + '/')  
+
+    cancel_url = "../../../../../issue/"+str(issue_id) if issue_id else "../../"
+
+    context = {
+        'form' : form,
+        'cancel_url': cancel_url
+    }
+    return render(request, 'uks_app/create_update_comment.html', context)
+
+# delete comment
+@login_required
+def comment_delete_view(request, issue_id, comment_id):
+    observed_issue = get_object_or_404(Issue, id=issue_id)  #get issue
+    user = request.user
+    observed_comment = get_object_or_404(Comment, id=comment_id)
+    if (user == observed_comment.user):           
+        observed_comment.delete()
+    else:
+        return HttpResponse('Unauthorized', status=401)
+    return HttpResponseRedirect('/issue/' + str(issue_id) + '/') 
+
+# one comment detailed view
+class OneCommentView(generic.DetailView):
+    model = Comment
+    template_name = 'uks_app/one_comment.html'
+
+    

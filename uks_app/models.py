@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from PIL import Image 
+from polymorphic.models import PolymorphicModel
 
 OPEN='OP'
 CLOSED='CL'
@@ -51,7 +52,7 @@ class Milestone(models.Model):
     def __str__(self):
         return str(self.title)
  
-class Event(models.Model):
+class Event(PolymorphicModel):
     time = models.DateTimeField()
     user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE)
     issue = models.ForeignKey(to=Issue, null=False, on_delete=models.CASCADE)
@@ -62,8 +63,12 @@ class Comment(Event):
     def __str__(self):
         return self.description
 
-class CommentChange(Event):
+class CommentChange(models.Model):
+    comment = models.ForeignKey(to=Comment, null=False, on_delete=models.CASCADE)
     newComment = models.CharField(max_length=200, blank=False)
+    time = models.DateTimeField()
+    class Meta:
+        ordering = ['time']
 
     def __str__(self):
         return self.newComment

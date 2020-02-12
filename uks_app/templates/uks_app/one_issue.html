@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
+{% load custom_filters %}
 
 <h3 class="mb-3">{{object.title}}
     <span style="float: right;">
@@ -29,30 +30,77 @@
 
 <hr>
 
+<div >
+    {% if user.is_authenticated %}
+        <span><a href="{% url 'new_comment' object.id %}" style="margin-bottom: 10px" class="btn btn-info"><i style="margin-right: 10px" class="fas fa-plus-circle"></i>New comment</a></span>
+    {% endif %}
 
 
 <div class="row mt-2">
     <!-- main part -->
     <div class="col-9">
-        {% if milestone_events %}
-            {% for event in milestone_events %}
-            <div class="card">
+        {% if events %}
+            {% for event in events %}
+            {% with event|classname as modelclass %}
+            <div class="card mb-2">
                 <div class="card-body">
-                    <div class="row">
-                        <p>{{event.checkpoint.title}}
-                        {% if event.add %}
-                            <br>Milestone added!</p>
-                        {% else %}
-                            <br>Milestone removed!</p>
+                        {% if modelclass == "MilestoneChange" %} 
+                            <div class="row">       
+                                <i style="margin-right: 10px; margin-top: 8px; color: #17a2b8" class="fas fa-map-signs"></i>
+                                <p>{{event.checkpoint.title}}
+                                {% if event.add %}
+                                    <br>Milestone added!</p>
+                                {% else %}
+                                    <br>Milestone removed!</p>
+                                {% endif %}
+                                <p class="ml-auto">User: {{event.user}}<br>Change date: {{event.time}}</p>
+                            </div>
+                            
+                        {% elif modelclass == "Comment" %}
+                            
+                            <div class="d-flex bd-highlight border-bottom mb-2">
+                            <div class="p-2 bd-highlight">
+                                          <img style="margin-right: 5px; margin-bottom: 7px;" class="rounded " width="30" height="30" src="{{ event.user.profile.image.url }}">
+                                    <span style="font-size: 1.25rem; color: #17a2b8" class="card-title"> {{event.user}} </span>
+                                    <span class="text-muted"> commented on {{event.time}} </span>
+                            </div>
+
+                                <div class="ml-auto p-2 bd-highlight text-muted">
+                                    {% if user.is_authenticated and user == event.user %}
+                                        <a data-toggle="tooltip" data-placement="top" title="Edit comment" href="{% url 'edit_comment' event.issue_id event.id %}"><i class="fa fa-edit" style="color: #17a2b8"></i></a>
+                                    {% endif %}
+                                    <a data-toggle="tooltip" data-placement="top" title="Open comment history" href="{% url 'one_comment' event.id %}"><i class="fa fa-history" style="color:#5aa6b0 "></i></a>
+                                    {% if user.is_authenticated and user == event.user%}
+                                        <a data-toggle="tooltip" data-placement="top" title="Delete comment" href="{% url 'delete_comment' event.issue_id event.id %}"><i class="fa fa-trash" style="color:gray"></i></a>
+                                    {% endif %}
+                                </div>
+                        </div>
+                        <div class="row">
+                            <i style="margin-right: 10px; margin-top: 8px; color: white" class="fas fa-ellipsis-h"></i>
+                            {% if event.commentchange_set.all %}
+                                {% for comment_change in event.commentchange_set.all %}
+                                    {% if forloop.last %}
+                                        <p>{{comment_change.newComment}}</p>
+
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <p class="card-text">{{event.description}}</p>
+                            {% endif %}
+                        </div>
+
+
                         {% endif %}
-                        <p class="ml-auto">User: {{event.user}}<br>Change date: {{event.time}}</p>
-                    </div>
+                        {% endwith %}
+
                 </div>
             </div>
             {% endfor %}
         {% else %}
-        <p>No changes</p>
+            <p>No changes</p>
         {% endif %}
+
+        
     </div>
     
     <!-- side part -->
@@ -105,5 +153,6 @@
         {% endif %}
     </div>
 </div>
+
 
 {% endblock %}
