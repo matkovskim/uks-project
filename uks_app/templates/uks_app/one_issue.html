@@ -81,7 +81,7 @@
                                 {% for comment_change in event.commentchange_set.all %}
                                     {% if forloop.last %}
                                         <p>{{comment_change.newComment}}</p>
-
+                                    }
                                     {% endif %}
                                 {% endfor %}
                             {% else %}
@@ -89,6 +89,25 @@
                             {% endif %}
                         </div>
 
+                        {% elif modelclass == "CodeChangeEvent" %}
+
+                            <div class="bd-highlight">
+                                {% if event.user %}
+                                    <img style="margin-right: 5px; margin-bottom: 7px;" class="rounded " width="30" height="30" src="{{ event.user.profile.image.url }}">
+                                    <span style="font-size: 1.25rem; color: #17a2b8" class="card-title"><a style="font-size: 1.25rem; color: #17a2b8" href="{% url 'profile' event.user.username %}">{{event.user}} </a></span>
+                                {% else %}
+                                    <span class="card-title">GitHub user: <span style="font-size: 1.25rem; color: #aaaaaa">{{event.code_change.github_username}}</span></span>
+                                {% endif %}
+
+                                {% if event.closing_event == False %}
+                                    <span>added a commit that referenced this issue</span>
+                                    <span class="text-muted"> on {{event.time}} </span>
+                                    <br/><p class="mb-0">{{event.code_change.message}}</p>
+                                {% else %}
+                                    <span>close issue by commit</span>
+                                {% endif %}
+
+                            </div>
 
                         {% endif %}
                         {% endwith %}

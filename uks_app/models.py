@@ -83,6 +83,10 @@ class CodeChange(models.Model):
     def __str__(self):
         return self.url
 
+class CodeChangeEvent(Event):
+    code_change = models.ForeignKey(to=CodeChange, null=False, on_delete=models.CASCADE)
+    closing_event = models.BooleanField(default=False)
+
 class StateChange(Event):
     newState = models.CharField(max_length=6, choices=PROBLEM_STATE, default=OPEN)
     
