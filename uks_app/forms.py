@@ -1,6 +1,7 @@
 from django import forms
 
-from .models import ObservedProject, Issue, Profile
+from .models import ObservedProject, Issue, Profile, Milestone, Label, Comment
+from django.forms.widgets import TextInput
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 
@@ -26,6 +27,62 @@ class IssueForm(forms.ModelForm):
             'title',
             'description'
         ]
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = [
+            'description',
+        ]
+
+class MilestoneForm(forms.ModelForm):
+    class Meta:
+        model = Milestone
+        fields = [
+            'title',
+            'date',
+            'description'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(MilestoneForm, self).__init__(*args, **kwargs)
+        self.fields['date'].widget.attrs['class'] = 'datepicker'
+
+class ChooseMilestoneForm(forms.Form): 
+
+    def __init__(self, project, observed_issue, *args, **kwargs):
+        super(ChooseMilestoneForm, self).__init__(*args, **kwargs)
+
+        milestones = Milestone.objects.filter(project = project).exclude(id__in=[milestone.id for milestone in observed_issue.milestones.all()]).all()
+
+        self.fields['milestones'] = forms.ModelMultipleChoiceField(queryset=milestones) 
+
+    def save(self, commit=True):
+        print(self.fields['milestones'])
+
+class LabelForm(forms.ModelForm):
+    class Meta:
+        model = Label
+        fields = [
+            'name',
+            'color'
+        ]
+        widgets = {
+            'color': TextInput(attrs={'type': 'color'}),
+        }
+
+class ChooseLabelForm(forms.Form): 
+
+    def __init__(self, project_issues, observed_issue, *args, **kwargs):
+        super(ChooseLabelForm, self).__init__(*args, **kwargs)
+
+        labels = Label.objects.filter(issue__in=[issue.id for issue in project_issues]).exclude(id__in=[label.id for label in observed_issue.labels.all()]).distinct()
+
+        self.fields['labels'] = forms.ModelMultipleChoiceField(queryset=labels)
+
+    def save(self, commit=True):
+        print(self.fields['labels'])
+
 
 class UserRegisterForm(UserCreationForm):
     email = forms.EmailField()
@@ -59,4 +116,3 @@ class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields = ['image']
-

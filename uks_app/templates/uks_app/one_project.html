@@ -2,10 +2,10 @@
 
 {% block content %}
 
-<h3 style="margin-bottom: 20px">{{object.name}}
+<h3 class="mb-3">{{object.name}}
     <span style="float: right;">
-        <a href="{% url 'edit_project' object.id %}" class="btn btn-info"><i style="margin-right: 10px" class="fas fa-edit"></i>Edit</a>
-        <a href="{% url 'delete_project' object.id %}" class="btn btn-secondary"><i style="margin-right: 10px" class="fas fa-trash-alt"></i>Delete</a>
+        <a href="{% url 'edit_project' object.id %}" class="btn btn-info" data-toggle="tooltip" data-placement="bottom" title="Edit project"><i class="fas fa-edit"></i></a>
+        <a href="{% url 'delete_project' object.id %}" class="btn btn-secondary" data-toggle="tooltip" data-placement="bottom" title="Delete project"><i class="fas fa-trash-alt"></i></a>
     </span>
 </h3>
 <h6>{{object.git_repo}}</h6>
@@ -15,13 +15,13 @@
 
 <ul class="nav nav-tabs" id="myTab" role="tablist">
     <li class="nav-item">
-        <a class="nav-link active" id="code-tab" data-toggle="tab" href="#code" role="tab" aria-controls="code" aria-selected="true"><i style="margin-right:6px" class="fas fa-laptop-code"></i>Code changes</a>
+        <a class="nav-link active tab-link" id="code-tab" data-toggle="tab" href="#code" role="tab" aria-controls="code" aria-selected="true"><i style="margin-right:6px" class="fas fa-laptop-code"></i>Code changes</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" id="issue-tab" data-toggle="tab" href="#issue" role="tab" aria-controls="issue" aria-selected="false"><i style="margin-right:6px" class="fas fa-exclamation-circle"></i>Issues</a>
+        <a class="nav-link tab-link" id="issue-tab" data-toggle="tab" href="#issue" role="tab" aria-controls="issue" aria-selected="false"><i style="margin-right:6px" class="fas fa-exclamation-circle"></i>Issues</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" id="issue-tab" data-toggle="tab" href="#milestone" role="tab" aria-controls="milestone" aria-selected="false"><i style="margin-right:6px" class="fas fa-map-signs"></i>Milestones</a>
+        <a class="nav-link tab-link" id="issue-tab" data-toggle="tab" href="#milestone" role="tab" aria-controls="milestone" aria-selected="false"><i style="margin-right:6px" class="fas fa-map-signs"></i>Milestones</a>
     </li>
 </ul>
 
@@ -58,47 +58,67 @@
                 {% else %}
                     <p>There are no code changes for this project.</p>
                 {% endif %}
-            </div>
         </div>
     </div>
   <!-- issues tab -->
     <div class="tab-pane fade" id="issue" role="tabpanel" aria-labelledby="issue-tab">
-        <div style="margin-top: 20px">
-            <span><a href="{% url 'new_issue' object.id %}" class="btn btn-info"><i style="margin-right: 10px" class="fas fa-plus-circle"></i>New issue</a></span>
-            <div style="margin-top: 20px">
-                {% if object.issue_set.all %}
-                    <!-- list of issues -->
-                    {% for issue in object.issue_set.all %}
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row">
-                                    {% if issue.state == 'OP'%}
-                                        <i style="margin-right: 10px; margin-top: 8px; color: green" class="fas fa-exclamation-circle"></i>
-                                    {% else %}
-                                        <i style="margin-right: 10px; margin-top: 8px; color: red" class="fas fa-exclamation-circle"></i>
-                                    {% endif %}
-                                    <h5 class="card-title"><a href="{% url 'one_issue' object.id issue.id %}">{{issue.title}}</a></h5>
-                                </div>
-                                <div class="row">
-                                    <i style="margin-right: 10px; margin-top: 8px; color: white" class="fas fa-ellipsis-h"></i>
-                                    <p class="card-text">{{issue.description}}</p>
+        <div class="mt-3">
+            <div style="margin-right: 6px" class="row justify-content-end">
+                <span><a href="{% url 'new_issue' object.id %}" class="btn btn-info"><i style="margin-right: 10px" class="fas fa-plus-circle"></i>New issue</a></span>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    {% if object.issue_set.all %}
+                        <!-- list of issues -->
+                        {% for issue in object.issue_set.all %}
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        {% if issue.state == 'OP'%}
+                                            <i style="margin-right: 10px; margin-top: 6px; color: green" class="fas fa-exclamation-circle"></i>
+                                        {% else %}
+                                            <i style="margin-right: 10px; margin-top: 6px; color: red" class="fas fa-exclamation-circle"></i>
+                                        {% endif %}
+
+                                        <h5 class="card-title mr-1"><a class="black-link" href="{% url 'one_issue' issue.id %}">{{issue.title}}</a></h5>
+                                        
+                                        <!-- labels -->
+                                        {% for label in issue.labels.all %}
+                                            <i style="margin-right: 10px; margin-top: 6px; color: {{label.color}}" class="fas fa-tag" data-toggle="tooltip" data-placement="bottom" title="{{label.name}}"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="row">
+                                        <i style="margin-right: 10px; margin-top: 8px; color: white" class="fas fa-ellipsis-h"></i>
+                                        <p class="card-text">{{issue.description}}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p>There are no issues for this project.</p>
-                {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p>There are no issues for this project.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
     <div class="tab-pane fade" id="milestone" role="tabpanel" aria-labelledby="milestone-tab">
         <div style="margin-top: 20px">
+            <span><a href="{% url 'new_milestone' object.id %}" class="btn btn-info"><i style="margin-right: 10px" class="fas fa-plus-circle"></i>New milestone</a></span>
+        <div class="mt-3">
             <div style="margin-top: 20px">
                 {% if object.milestone_set.all %}
-                    <!-- TODO list of milestones -->
                     {% for milestone in object.milestone_set.all %}
- 
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row d-flex">
+                                    <h5 class="card-title"><a href="{% url 'one_milestone' object.id milestone.id %}">{{milestone.title}}</a></h5> 
+                                    <h5 class="ml-auto">Due date: {{milestone.date}}</h5>
+                                </div>
+                                <div class="row">
+                                    <p class="card-text">{{milestone.description}}</p>
+                                </div>
+                            </div>
+                        </div>
                     {% endfor %}
                 {% else %}
                     <p>There are no milestones for this project.</p>
