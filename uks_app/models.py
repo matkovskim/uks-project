@@ -29,7 +29,8 @@ class Issue(models.Model):
         choices=PROBLEM_STATE,
         default=OPEN,
     )
-
+    create_time = models.DateTimeField()
+    
     def __str__(self):
         return self.title
 
@@ -93,12 +94,6 @@ class IssueChange(Event):
         choices=PROBLEM_STATE,
         default=OPEN,
     )
-    
-class StateChange(Event):
-    newState = models.CharField(max_length=6, choices=PROBLEM_STATE, default=OPEN)
-    
-    def __str__(self):
-        return self.newState
 
 class MilestoneChange(Event):
     add = models.BooleanField()
