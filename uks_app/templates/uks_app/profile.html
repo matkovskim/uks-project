@@ -11,10 +11,16 @@
       <img class="img-thumbnail account-img" src="{{ selected_user.profile.image.url }}">
     </div>
     <div class=" mb-4 media-body">
-      <h2 class="account-heading">{{ selected_user.username }}</h2>
+      <h2 class="account-heading">{{ selected_user.username }}
       <p class="text-secondary">{{ selected_user.email }}</p>
       {% if update_possible %}
         <a class="btn btn-md btn-dark" href="{% url 'profile_update' selected_user.username %}">Update Profile</a>
+      {% endif %}
+      {% if follow_possible %}
+        <button class="btn btn-primary"> follow </button></h2>
+      {% endif %}
+       {% if unfollow_possible %}
+        <button class="btn btn-primary"> unfollow </button></h2>
       {% endif %}
     </div>
   </div>
@@ -59,16 +65,87 @@
               </div>
           </div>
       </div>
-    <!-- issues tab -->
+    <!-- followers tab -->
       <div class="tab-pane fade" id="followers" role="tabpanel" aria-labelledby="issue-tab">
           <div style="margin-top: 20px">
-              
+            {% if selected_user_followers %}
+                <!-- list of users -->
+                {% for person in selected_user_followers %}
+                
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <div class="row">
+                                  <!--Ovde ide slika korisnika-->
+                                    <div class="media ml-2">
+                                        <img class="img-thumbnail account-img" height="60" width="60" src="{{ person.user.profile.image.url }}">
+                                    </div>
+                                    <!--Ovde ide username-->
+                                    <div class="media-body">
+                                        <h5 class="card-title mb-0 ml-3"><a href="{% url 'profile' person.user.username %}"> {{person.user.username}}</a></h5>
+                                        <small class="text-secondary ml-3">{{person.user.first_name}} {{person.user.last_name}}</small>
+                                    </div>
+                                    {% for is_follow_possible in final_for_followers %}
+                                      {% if forloop.counter == forloop.parentloop.counter %}  
+                                        {% if is_follow_possible == False and request_user != person.user%}
+                                          <div class=" justify-content-end"><button class="btn btn-primary btn-sm mr-2" >unfollow</button></div>
+                                        {% endif %}
+                                        {%if is_follow_possible and request_user != person.user %}
+                                          <div class=" justify-content-end"><button class="btn btn-primary btn-sm mr-2" >follow</button></div>
+                                        {% endif %}
+                                      {% endif %}
+                                    {% endfor %}
+                                </div>                                  
+                              </div>
+                          </div>
+                 
+                {% endfor %}
+
+            {% else %}
+              <p>There are no users.</p>
+            {% endif %}
+
+
           </div>
       </div>
+      <!-- following tab -->
       <div class="tab-pane fade" id="following" role="tabpanel" aria-labelledby="milestone-tab">
           <div style="margin-top: 20px">
               <div style="margin-top: 20px">
-                  
+              {% if selected_user_following %}
+                    <!-- list of users -->                 
+                    {% for person in selected_user_following %}                      
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <div class="row">
+                                    <!--Ovde ide slika korisnika-->
+                                    <div class="media ml-2">
+                                        <img class="img-thumbnail account-img" height="60" width="60" src="{{ person.user.profile.image.url }}">
+                                    </div>
+                                    <!--Ovde ide username-->
+                                    <div class="media-body">
+                                        <h5 class="card-title mb-0 ml-3"><a href="{% url 'profile' person.user.username %}"> {{person.user.username}}</a></h5>
+                                        <small class="text-secondary ml-3">{{person.user.first_name}} {{person.user.last_name}}</small>
+                                    </div>
+                                    {% for is_follow_possible in final_for_following %}
+                                      {% if forloop.counter == forloop.parentloop.counter %}    
+                                        {% if is_follow_possible == False and request_user != person.user%}
+                                        <div class=" justify-content-end"><button class="btn btn-primary btn-sm mr-2" >unfollow</button></div>
+                                        {% endif %}
+                                        {%if is_follow_possible and request_user != person.user %}
+
+                                          <div class=" justify-content-end"><a href="{% url 'follow_user' person.user.username %}" class="btn btn-primary btn-sm mr-2" >follow</a></div>
+                                        {% endif %}
+                                      {% endif %}
+                                    {% endfor %}
+                                </div>                               
+                            </div>
+                        </div>
+                     
+                  {% endfor %}
+
+                {% else %}
+                    <p>There are no users.</p>
+                {% endif %}
               </div>
           </div>
       </div>

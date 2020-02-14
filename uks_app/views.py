@@ -4,7 +4,7 @@ from django.views import generic
 from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 
-from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange
+from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange, Profile
 from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm, CommentForm
 import logging
 from django.contrib import messages
@@ -191,10 +191,49 @@ def register_user(request):
 # user profile
 def profile(request, id=None):
     selected_user = get_object_or_404(User, username=id)
+    selected_user_following = selected_user.profile.following.all() # osobe koje prati onaj ciji se profil gleda    
+    selected_user_followers = selected_user.profile.followers.all() # osobe koje prate osobu ciji se profil gleda
+    temp = []
+    temp1 = []
+    for person in selected_user_following:
+        temp.append(person.user)
+    for person in selected_user_followers:
+        temp1.append(person.user)
+    my_following = [] # osobe koje prati ulogovana osoba
+    my_followers = []# osobe koje prate ulogovanu osobu
+    final_for_followers = []
+    final_for_following = []
+    if request.user.is_authenticated:
+        for person in request.user.profile.following.all():
+            my_following.append(person.user)
+        for person in request.user.profile.followers.all():
+            my_followers.append(person.user)      
+        for i in temp:
+            if i in my_following and i != request.user:            
+                final_for_following.append(False)
+            if i not in my_following and i != request.user:
+                final_for_following.append(True)
+            if i == request.user:
+                final_for_following.append(False)
+        for i in temp1:
+            if i in my_following:
+                final_for_followers.append(False)
+            if i not in my_following:
+                final_for_followers.append(True)
+            if i == request.user:
+                final_for_followers.append(False)
+
     projects = ObservedProject.objects.filter(user=selected_user)
     update_possible = selected_user == request.user
-    print(update_possible)
-    context = {"selected_user": selected_user, 'projects' : projects, 'update_possible' : update_possible}
+    
+    follow_possible = selected_user != request.user and selected_user not in my_following and request.user.is_authenticated
+    unfollow_possible =  selected_user != request.user and selected_user in my_following and request.user.is_authenticated
+
+    print('selected_user_following ', selected_user_following)
+    print('final_for_following ', final_for_following)
+    print('selected_user_followers ', selected_user_followers)
+    print('final_for_followers ', final_for_followers)
+    context = {"selected_user": selected_user, 'projects' : projects, 'update_possible' : update_possible, "selected_user_following" : selected_user_following, "selected_user_followers" : selected_user_followers, "follow_possible": follow_possible, "unfollow_possible": unfollow_possible, "final_for_following": final_for_following, "final_for_followers": final_for_followers, "request_user" : request.user, }
     return render(request, 'uks_app/profile.html', context)
 
 # user profile update
@@ -307,7 +346,6 @@ def create_update_milestone(request, project_id, milestone_id=None):
 # choose label
 @login_required
 def choose_milestone(request, issue_id):
-
     
     #get issue and project
     observed_issue = get_object_or_404(Issue, pk=issue_id)
@@ -358,8 +396,7 @@ def remove_milestone(request, milestone_id, issue_id):
 # new comment form
 @login_required
 def create_update_comment(request, issue_id, comment_id=None):
-    #get issue
-    observed_issue = get_object_or_404(Issue, id=issue_id)
+    observed_issue = get_object_or_404(Issue, id=issue_id)  #get issue
     #comment_id == None -> Create
     #comment_id != None -> Update
     observed_comment = get_object_or_404(Comment, pk=comment_id) if comment_id else None
