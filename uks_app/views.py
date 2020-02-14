@@ -4,13 +4,20 @@ from django.views import generic
 from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 
-from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange
+from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange, CodeChangeEvent, IssueChange
 from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm, CommentForm
 import logging
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from .models import ObservedProject, Issue, CodeChange
+from .forms import ProjectForm, IssueForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+import json
+import logging
 import datetime
+import re
 
 # home page
 def index(request): 
@@ -145,8 +152,11 @@ def change_issue_state(request, project_id, issue_id):
 
     if observed_issue.state == "OP":
         observed_issue.state = "CL"
+        q = IssueChange.objects.create(user=request.user, time= datetime.datetime.now(), issue=observed_issue, state="CL")
+
     else:
         observed_issue.state = "OP"
+        q = IssueChange.objects.create(user=request.user, time= datetime.datetime.now(), issue=observed_issue, state="OP")
     
     observed_issue.save()
 
@@ -222,6 +232,64 @@ def profile_update(request, id=None):
         'p_form' : p_form
     }
     return render(request, 'uks_app/profile_update.html', context)
+
+#change code
+@require_http_methods(["POST"])
+@csrf_exempt
+def hook_receiver_view(request):
+    request_body_string = request.body.decode("utf-8")
+    data = json.loads(request_body_string)
+    commit_url=""
+    repository_url=""
+    message=""
+    try:
+        commits=data["commits"]
+        repository_url=data["repository"]["html_url"]
+        project= ObservedProject.objects.filter(git_repo = repository_url)
+        if len(project)!=0 :
+            for commit in commits:
+                commit_url=commit["url"]
+                message=commit["message"]
+                email=commit["author"]["email"]
+                username=commit["author"]["name"]
+                time=commit["timestamp"]
+                users=User.objects.filter(Q(email = email))
+                if len(users)==0:
+                    q = CodeChange.objects.create(url=commit_url, project=project.first(), message=message, date_time=time, github_username=username)
+                else:
+                    q = CodeChange.objects.create(url=commit_url, project=project.first(), message=message, user=users[0], date_time=time, github_username=username)
+                
+                #povezivanje sa issuima
+                regex_matches = re.findall('~(.+?)~', message)
+                regex_matches_close = re.findall('close ~(.+?)~', message)
+                
+                if len(regex_matches_close)!=0 :
+                    for match in regex_matches_close:
+                        issue= Issue.objects.filter(Q(title = match) & Q(project = project.first()))                        
+                        if len(issue) != 0:
+                            related_issue=issue.first()
+                            related_issue.state='CL'
+                            related_issue.save()
+                            if len(users)!=0:
+                                code_change_event = CodeChangeEvent.objects.create(code_change=q, issue=issue[0], time=time, user=users[0], closing_event=True)
+                            else:
+                                code_change_event = CodeChangeEvent.objects.create(code_change=q, issue=issue[0], time=time, closing_event=True)
+            
+                if len(regex_matches)!=0 :
+                    for match in regex_matches:
+                        if match not in regex_matches_close:
+                            issue= Issue.objects.filter(Q(title = match) & Q(project = project.first()))
+                            if len(issue) != 0:
+                                if len(users)!=0:
+                                    code_change_event = CodeChangeEvent.objects.create(code_change=q, issue=issue[0], time=time, user=users[0], closing_event=False)
+                                else:
+                                    code_change_event = CodeChangeEvent.objects.create(code_change=q, issue=issue[0], time=time, closing_event=False)
+            return HttpResponse('success')
+        else:
+            return HttpResponse('Project does not exist', status=400)
+
+    except Exception as e:
+        return HttpResponse('Data is not valid', status=400)
 
 #delete project
 class ProjectDelete(DeleteView):
