@@ -87,6 +87,13 @@ class CodeChangeEvent(Event):
     code_change = models.ForeignKey(to=CodeChange, null=False, on_delete=models.CASCADE)
     closing_event = models.BooleanField(default=False)
 
+class IssueChange(Event):
+    state = models.CharField(
+        max_length=2,
+        choices=PROBLEM_STATE,
+        default=OPEN,
+    )
+    
 class StateChange(Event):
     newState = models.CharField(max_length=6, choices=PROBLEM_STATE, default=OPEN)
     

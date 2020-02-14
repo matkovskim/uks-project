@@ -34,7 +34,7 @@
     {% if user.is_authenticated %}
         <span><a href="{% url 'new_comment' object.id %}" style="margin-bottom: 10px" class="btn btn-info"><i style="margin-right: 10px" class="fas fa-plus-circle"></i>New comment</a></span>
     {% endif %}
-
+</div>
 
 <div class="row mt-2">
     <!-- main part -->
@@ -104,10 +104,25 @@
                                     <span class="text-muted"> on {{event.time}} </span>
                                     <br/><p class="mb-0">{{event.code_change.message}}</p>
                                 {% else %}
-                                    <span>close issue by commit</span>
+                                    <span>closed issue by commit</span>
+                                    <span class="text-muted"> on {{event.time}} </span>
                                 {% endif %}
-
                             </div>
+
+                        {% elif modelclass == "IssueChange" %}
+                            <div class="bd-highlight">
+                                    <img style="margin-right: 5px; margin-bottom: 7px;" class="rounded " width="30" height="30" src="{{ event.user.profile.image.url }}">
+                                    <span style="font-size: 1.25rem; color: #17a2b8" class="card-title"><a style="font-size: 1.25rem; color: #17a2b8" href="{% url 'profile' event.user.username %}">{{event.user}} </a></span>
+                               
+                                {% if event.state == 'OP' %}
+                                    <span>reopened issue</span>
+                                    <span class="text-muted"> on {{event.time}} </span>
+                                {% else %}
+                                    <span>closed issue</span>
+                                    <span class="text-muted"> on {{event.time}} </span>
+                                {% endif %}
+                            </div>
+
 
                         {% endif %}
                         {% endwith %}

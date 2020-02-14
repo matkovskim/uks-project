@@ -4,7 +4,7 @@ from django.views import generic
 from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 
-from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange, CodeChangeEvent
+from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange, CodeChangeEvent, IssueChange
 from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm, CommentForm
 import logging
 from django.contrib import messages
@@ -152,8 +152,11 @@ def change_issue_state(request, project_id, issue_id):
 
     if observed_issue.state == "OP":
         observed_issue.state = "CL"
+        q = IssueChange.objects.create(user=request.user, time= datetime.datetime.now(), issue=observed_issue, state="CL")
+
     else:
         observed_issue.state = "OP"
+        q = IssueChange.objects.create(user=request.user, time= datetime.datetime.now(), issue=observed_issue, state="OP")
     
     observed_issue.save()
 
