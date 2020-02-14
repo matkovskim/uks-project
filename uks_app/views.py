@@ -19,6 +19,9 @@ import logging
 import datetime
 import re
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
 # home page
 def index(request): 
     return render(request, 'uks_app/index.html') #optional third argument context
@@ -67,6 +70,9 @@ def create_update_issue(request, project_id, issue_id=None):
 
     if form.is_valid():
         issue = form.save(commit=False)
+       
+        if not issue_id:
+            issue.create_time = datetime.datetime.now()
         
         #set project as foreign key
         issue.project = observed_project
@@ -492,4 +498,56 @@ class OneCommentView(generic.DetailView):
     model = Comment
     template_name = 'uks_app/one_comment.html'
 
-    
+class ChartData(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, project_id, format=None):
+        data = {}
+        temp_data = []
+
+        issues = Issue.objects.filter(project_id=project_id).all()
+        for issue in issues:
+
+            create_date = issue.create_time.date()
+
+            temp_data.append((str(create_date), 'open'))
+
+            events = Event.objects.filter(issue_id=issue.id).order_by('time')
+
+            for event in events:
+                if event.__class__.__name__ == 'IssueChange':
+                    date = event.time.date()
+                    if event.state == 'CL':
+                        temp_data.append((str(date), 'close'))
+                    else:
+                        temp_data.append((str(date), 'open'))
+
+        opened_issues = 0
+
+        sorted_data = sorted(temp_data, key=lambda x: x[0])
+
+        for entry in sorted_data:
+            if entry[1] == 'open':
+                opened_issues += 1
+            else:
+                opened_issues -= 1
+            data[str(entry[0])] = opened_issues
+
+
+        labels = [] 
+        values = []
+
+        for i in sorted (data.keys()) :  
+            labels.append(i)
+            values.append(data[i])
+
+        response_data = {
+            "labels": labels,
+            "values": values,
+        }
+        return Response(response_data)
+ 
+
+        
+

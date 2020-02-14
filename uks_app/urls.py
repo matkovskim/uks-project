@@ -57,8 +57,9 @@ urlpatterns = [
     path('password-reset-complete/', auth_views.PasswordResetCompleteView.as_view(template_name = 'uks_app/password_reset_complete.html'), name="password_reset_complete"),
 
     #codeChange
-    path('api/hello/', views.hook_receiver_view)
+    path('api/hello/', views.hook_receiver_view),
 
+    path('api/chart/data/<int:project_id>', views.ChartData.as_view()),
 ]
 
 if settings.DEBUG:
