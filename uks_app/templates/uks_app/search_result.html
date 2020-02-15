@@ -92,19 +92,28 @@
                 {% if users_list %}
                     <!-- list of users -->
                     {% for user in users_list %}
-                        <div class="card">
+                        <div class="card mb-2">
                             <div class="card-body">
                                 <div class="row">
                                     <!--Ovde ide slika korisnika-->
-                                    <div class="media mb-4">
+                                    <div class="media ml-2">
                                         <img class="img-thumbnail account-img" height="60" width="60" src="{{ user.profile.image.url }}">
                                     </div>
                                     <!--Ovde ide username-->
                                     <div class="media-body">
-                                        <h5 class="card-title mb-0"><a href="{% url 'profile' user.username %}"> &nbsp; {{user.username}}</a></h5>
-                                        <small class="text-secondary ml-1">&nbsp; {{user.first_name}} {{user.last_name}}</small>
+                                        <h5 class="card-title mb-0 ml-3"><a href="{% url 'profile' user.username %}"> {{user.username}}</a></h5>
+                                        <small class="text-secondary ml-3"> {{user.first_name}} {{user.last_name}}</small>
                                     </div>
-                                
+                                     {% for is_follow_possible in follow_possible %}
+                                      {% if forloop.counter == forloop.parentloop.counter %}    
+                                        {% if is_follow_possible == False and request_user != user%}
+                                        <div class=" justify-content-end"><a id="{{user.username}}" class="btn btn-primary btn-sm mr-2 unfollow text-white" >unfollow</a></div>
+                                        {% endif %}
+                                        {%if is_follow_possible and request_user != user %}
+                                          <div class=" justify-content-end"><a id="{{user.username}}" class="btn btn-primary btn-sm mr-2 follow text-white" >follow</a></div>
+                                        {% endif %}
+                                      {% endif %}
+                                    {% endfor %}
                                 </div>
                                
                             </div>

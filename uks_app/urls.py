@@ -60,6 +60,11 @@ urlpatterns = [
     path('api/hello/', views.hook_receiver_view),
 
     path('api/chart/data/<int:project_id>', views.ChartData.as_view()),
+
+    # followers 
+    path('api/user/follow', views.follow),
+    path('api/user/unfollow', views.unfollow),
+
 ]
 
 if settings.DEBUG:
