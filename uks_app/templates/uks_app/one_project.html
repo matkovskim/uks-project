@@ -1,5 +1,73 @@
 {% extends 'base.html' %}
 
+<script>
+{% block jquery %}
+
+var endpoint = '/api/chart/data/' + {{object.id}}
+console.log(endpoint)
+var values = []
+var labels = [];
+$.ajax({
+    method: "GET",
+    url: endpoint,
+    success: function(data){
+        console.log(data)
+        labels = data.labels
+        values = data.values
+    
+        setChart()
+    },
+    error: function(error_data){
+        console.log("error")
+        console.log(error_data)
+    }
+})
+
+function setChart(){
+    var ctx = document.getElementById('myChart');
+    var myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Number of open issues',
+                data: values,
+                backgroundColor: [
+                    'rgba(23, 162, 184, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(255, 159, 64, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(23, 162, 184, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+        scales: {
+            yAxes: [{
+                ticks: {
+                    beginAtZero:true
+                }
+            }]
+        }
+    }
+        
+    });
+}
+
+{% endblock %}
+</script>
+
+
 {% block content %}
 
 <h3 class="mb-3">{{object.name}}
@@ -21,7 +89,10 @@
         <a class="nav-link tab-link" id="issue-tab" data-toggle="tab" href="#issue" role="tab" aria-controls="issue" aria-selected="false"><i style="margin-right:6px" class="fas fa-exclamation-circle"></i>Issues</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link tab-link" id="issue-tab" data-toggle="tab" href="#milestone" role="tab" aria-controls="milestone" aria-selected="false"><i style="margin-right:6px" class="fas fa-map-signs"></i>Milestones</a>
+        <a class="nav-link tab-link" id="milestone-tab" data-toggle="tab" href="#milestone" role="tab" aria-controls="milestone" aria-selected="false"><i style="margin-right:6px" class="fas fa-map-signs"></i>Milestones</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link tab-link" id="chart-tab" data-toggle="tab" href="#chart" role="tab" aria-controls="chart" aria-selected="false"><i style="margin-right:6px" class="fas fa-chart-bar"></i>Charts</a>
     </li>
 </ul>
 
@@ -29,8 +100,35 @@
   <!-- code changes tab -->
     <div class="tab-pane fade show active" id="code" role="tabpanel" aria-labelledby="code-tab">
         <div>
-            <div class="mt-3">
-                <p>TO DO: code changes or whatever</p>
+            <div style="margin-top: 20px">
+                {% if object.codechange_set.all %}
+                    <!-- list of issues -->
+                    {% for code_change in object.codechange_set.all %}
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row mt-0">
+                                    <h5 class="card-title mb-0">{{code_change.message}}</h5>
+                                </div>
+                                <div class="row">
+                                    <p class="card-text mb-0"><a href={{code_change.url}}>{{code_change.url}}</a></p>
+                                </div>
+                                <div class="row text-muted">
+                                    {% if code_change.user %}
+                                    <img class="img-thumbnail account-img" height="30" width="30" src="{{ code_change.user.profile.image.url }}">
+                                    <p class="card-text mb-0 mt-1"><a href="{% url 'profile' code_change.user.username %}">{{code_change.user.username}}</a> 
+                                    {% endif %}
+                                        {% if not code_change.user %}
+                                            <p>GitHub user: {{code_change.github_username}} &nbsp; </p> 
+                                        {% endif %}
+                                        {{code_change.date_time}}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>There are no code changes for this project.</p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -78,30 +176,36 @@
     <div class="tab-pane fade" id="milestone" role="tabpanel" aria-labelledby="milestone-tab">
         <div style="margin-top: 20px">
             <span><a href="{% url 'new_milestone' object.id %}" class="btn btn-info"><i style="margin-right: 10px" class="fas fa-plus-circle"></i>New milestone</a></span>
-        <div class="mt-3">
-            <div style="margin-top: 20px">
-                {% if object.milestone_set.all %}
-                    {% for milestone in object.milestone_set.all %}
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row d-flex">
-                                    <h5 class="card-title"><a href="{% url 'one_milestone' object.id milestone.id %}">{{milestone.title}}</a></h5> 
-                                    <h5 class="ml-auto">Due date: {{milestone.date}}</h5>
-                                </div>
-                                <div class="row">
-                                    <p class="card-text">{{milestone.description}}</p>
+            <div class="mt-3">
+                <div style="margin-top: 20px">
+                    {% if object.milestone_set.all %}
+                        {% for milestone in object.milestone_set.all %}
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row d-flex">
+                                        <h5 class="card-title"><a href="{% url 'one_milestone' object.id milestone.id %}">{{milestone.title}}</a></h5> 
+                                        <h5 class="ml-auto">Due date: {{milestone.date}}</h5>
+                                    </div>
+                                    <div class="row">
+                                        <p class="card-text">{{milestone.description}}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p>There are no milestones for this project.</p>
-                {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p>There are no milestones for this project.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
-    <!-- add new tabs ? -->
+    <div class="tab-pane fade" id="chart" role="tabpanel" aria-labelledby="chart-tab">
+        <canvas id="myChart" width="375" height="200"></canvas>
+    </div>
+    <!-- add new tabs ? --> 
 </div>
 </ul>
 
-{% endblock %}
+
+
+{% endblock %}    

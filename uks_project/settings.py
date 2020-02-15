@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'crispy_forms',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -81,13 +82,13 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'uks',
         'USER':'postgres',
-        'PASSWORD':'postgres',
+        'PASSWORD':'root',
         'HOST': '127.0.0.1',
         'port': '5432'
     }
 }
-
-
+ 
+ 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 

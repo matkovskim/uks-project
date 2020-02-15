@@ -56,8 +56,14 @@ urlpatterns = [
     path('password-reset-confirm/<uidb64>/<token>', auth_views.PasswordResetConfirmView.as_view(template_name = 'uks_app/password_reset_confirm.html'), name="password_reset_confirm"),
     path('password-reset-complete/', auth_views.PasswordResetCompleteView.as_view(template_name = 'uks_app/password_reset_complete.html'), name="password_reset_complete"),
 
-    # followers
-    path('follow/<str:id>/', views.follow_view, name="follow_user"),
+    #codeChange
+    path('api/hello/', views.hook_receiver_view),
+
+    path('api/chart/data/<int:project_id>', views.ChartData.as_view()),
+
+    # followers 
+    path('api/user/follow', views.follow),
+    path('api/user/unfollow', views.unfollow),
 
 ]
 

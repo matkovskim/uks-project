@@ -17,23 +17,23 @@
         <a class="btn btn-md btn-dark" href="{% url 'profile_update' selected_user.username %}">Update Profile</a>
       {% endif %}
       {% if follow_possible %}
-        <button class="btn btn-primary"> follow </button></h2>
+        <a id="{{selected_user.username}}" class="btn btn-primary follow text-white"> follow </a></h2>
       {% endif %}
        {% if unfollow_possible %}
-        <button class="btn btn-primary"> unfollow </button></h2>
+        <a id="{{selected_user.username}}"  class="btn btn-primary unfollow text-white"> unfollow </a></h2>
       {% endif %}
     </div>
   </div>
   <div class="col-md-8">
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item">
-          <a class="nav-link active" id="code-tab" data-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="true"><i style="margin-right:6px" class="fas fa-project-diagram"></i></i>Projects</a>
+          <a class="nav-link active" id="code-tab" data-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="true"><i style="margin-right:6px" class="fas fa-project-diagram"></i></i>Projects ({{projects|length}}) </a>
       </li>
       <li class="nav-item">
-          <a class="nav-link" id="issue-tab" data-toggle="tab" href="#followers" role="tab" aria-controls="followers" aria-selected="false"><i style="margin-right:6px" class="fas fa-users"></i>Followers</a>
+          <a class="nav-link" id="issue-tab" data-toggle="tab" href="#followers" role="tab" aria-controls="followers" aria-selected="false"><i style="margin-right:6px" class="fas fa-users"></i>Followers ({{selected_user_followers|length}})</a>
       </li>
       <li class="nav-item">
-          <a class="nav-link" id="issue-tab" data-toggle="tab" href="#following" role="tab" aria-controls="following" aria-selected="false"><i style="margin-right:6px" class="fas fa-users"></i>Following</a>
+          <a class="nav-link" id="issue-tab" data-toggle="tab" href="#following" role="tab" aria-controls="following" aria-selected="false"><i style="margin-right:6px" class="fas fa-users"></i>Following ({{selected_user_following|length}}) </a>
       </li>
   </ul>
   
@@ -70,8 +70,7 @@
           <div style="margin-top: 20px">
             {% if selected_user_followers %}
                 <!-- list of users -->
-                {% for person in selected_user_followers %}
-                
+                {% for person in selected_user_followers %}                
                         <div class="card mb-2">
                             <div class="card-body">
                                 <div class="row">
@@ -87,10 +86,10 @@
                                     {% for is_follow_possible in final_for_followers %}
                                       {% if forloop.counter == forloop.parentloop.counter %}  
                                         {% if is_follow_possible == False and request_user != person.user%}
-                                          <div class=" justify-content-end"><button class="btn btn-primary btn-sm mr-2" >unfollow</button></div>
+                                          <div class=" justify-content-end"><a id="{{person.user.username}}" class="btn btn-primary btn-sm mr-2 unfollow text-white" >unfollow</a></div>
                                         {% endif %}
                                         {%if is_follow_possible and request_user != person.user %}
-                                          <div class=" justify-content-end"><button class="btn btn-primary btn-sm mr-2" >follow</button></div>
+                                          <div class=" justify-content-end"><a id="{{person.user.username}}" class="btn btn-primary btn-sm mr-2 follow text-white" >follow</a></div>
                                         {% endif %}
                                       {% endif %}
                                     {% endfor %}
@@ -129,11 +128,10 @@
                                     {% for is_follow_possible in final_for_following %}
                                       {% if forloop.counter == forloop.parentloop.counter %}    
                                         {% if is_follow_possible == False and request_user != person.user%}
-                                        <div class=" justify-content-end"><button class="btn btn-primary btn-sm mr-2" >unfollow</button></div>
+                                        <div class=" justify-content-end"><a id="{{person.user.username}}" class="btn btn-primary btn-sm mr-2 unfollow text-white" >unfollow</a></div>
                                         {% endif %}
                                         {%if is_follow_possible and request_user != person.user %}
-
-                                          <div class=" justify-content-end"><a href="{% url 'follow_user' person.user.username %}" class="btn btn-primary btn-sm mr-2" >follow</a></div>
+                                          <div class=" justify-content-end"><a id="{{person.user.username}}" class="btn btn-primary btn-sm mr-2 follow text-white" >follow</a></div>
                                         {% endif %}
                                       {% endif %}
                                     {% endfor %}
