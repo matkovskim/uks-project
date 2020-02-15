@@ -30,7 +30,8 @@ class Issue(models.Model):
         choices=PROBLEM_STATE,
         default=OPEN,
     )
-
+    create_time = models.DateTimeField()
+    
     def __str__(self):
         return self.title
 
@@ -74,17 +75,26 @@ class CommentChange(models.Model):
     def __str__(self):
         return self.newComment
 
-class CodeChange(Event):
-    url = models.URLField(max_length=100)
-
+class CodeChange(models.Model):
+    url = models.CharField(max_length=200, blank=False)
+    message = models.CharField(max_length=400)
+    project = models.ForeignKey(to=ObservedProject, null=False, on_delete=models.CASCADE)
+    user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE)
+    date_time = models.DateTimeField()
+    github_username = models.CharField(max_length=200, blank=False)
     def __str__(self):
         return self.url
 
-class StateChange(Event):
-    newState = models.CharField(max_length=6, choices=PROBLEM_STATE, default=OPEN)
-    
-    def __str__(self):
-        return self.newState
+class CodeChangeEvent(Event):
+    code_change = models.ForeignKey(to=CodeChange, null=False, on_delete=models.CASCADE)
+    closing_event = models.BooleanField(default=False)
+
+class IssueChange(Event):
+    state = models.CharField(
+        max_length=2,
+        choices=PROBLEM_STATE,
+        default=OPEN,
+    )
 
 class MilestoneChange(Event):
     add = models.BooleanField()
@@ -99,6 +109,7 @@ class ResponsibleUserChange(Event):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     image = models.ImageField(default='profile_pics/default.jpg', upload_to='profile_pics')
+    following = models.ManyToManyField('self', related_name='followers', symmetrical=False)
 
     def __str__(self):
         return f'{self.user.username} Profile'

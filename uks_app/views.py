@@ -4,13 +4,24 @@ from django.views import generic
 from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 
-from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange
-from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, ChooseSubissueForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm, CommentForm
+from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange, CodeChangeEvent, IssueChange
+from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm, CommentForm, ChooseSubissueForm
 import logging
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from .models import ObservedProject, Issue, CodeChange
+from .forms import ProjectForm, IssueForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+import json
+import logging
 import datetime
+import re
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
 
 # home page
 def index(request): 
@@ -60,6 +71,9 @@ def create_update_issue(request, project_id, issue_id=None):
 
     if form.is_valid():
         issue = form.save(commit=False)
+       
+        if not issue_id:
+            issue.create_time = datetime.datetime.now()
         
         #set project as foreign key
         issue.project = observed_project
@@ -148,6 +162,7 @@ def choose_subissue(request, issue_id):
         for issue in chosen_issues:
             if issue.parent_issue == None and issue != observed_issue:
                 issue.parent_issue = observed_issue
+
                 issue.save()
         
         return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
@@ -190,6 +205,8 @@ def create_subissue(request, issue_id):
         #set parent issue
         issue.parent_issue = observed_issue
 
+        issue.create_time = datetime.datetime.now()
+
         issue.save()
         
         return HttpResponseRedirect('/issue/' + str(issue_id) + '/')  
@@ -212,8 +229,11 @@ def change_issue_state(request, project_id, issue_id):
 
     if observed_issue.state == "OP":
         observed_issue.state = "CL"
+        q = IssueChange.objects.create(user=request.user, time= datetime.datetime.now(), issue=observed_issue, state="CL")
+
     else:
         observed_issue.state = "OP"
+        q = IssueChange.objects.create(user=request.user, time= datetime.datetime.now(), issue=observed_issue, state="OP")
     
     observed_issue.save()
 
@@ -241,7 +261,16 @@ def search_projects(request):
     observed_projects = ObservedProject.objects.filter(name__icontains=search_name.lower()).filter(public = 'True')
     issues_list =Issue.objects.filter(title__icontains=search_name.lower(), project__public='True')
     users_list=User.objects.filter(Q(first_name__icontains = search_name.lower()) | Q(last_name__icontains = search_name.lower()) | Q(username__icontains = search_name.lower()) & Q(is_staff='False'))
-    return render(request, 'uks_app/search_result.html', {'observed_projects': observed_projects, 'issues_list':issues_list, 'users_list':users_list})
+    user = request.user # logged in user
+    follow_possible = []
+    if user.is_authenticated: # if the user is logged in
+        users_following = user.profile.following.all() # users that the logged in user is following
+        for user in users_list:                        
+            if user.profile in users_following: # already follows, so he can only unfollow him
+                follow_possible.append(False) 
+            else:
+                follow_possible.append(True)    # he doesn't follow him, so he can follow him
+    return render(request, 'uks_app/search_result.html', {'observed_projects': observed_projects, 'issues_list':issues_list, 'users_list':users_list, 'follow_possible': follow_possible, 'request_user': user})
 
 # user registration 
 def register_user(request):
@@ -258,10 +287,34 @@ def register_user(request):
 # user profile
 def profile(request, id=None):
     selected_user = get_object_or_404(User, username=id)
+    selected_user_following = selected_user.profile.following.all() # users that the selected user is following    
+    selected_user_followers = selected_user.profile.followers.all() # users that the selected user is followed by
+    my_following = [] # users that the logged in user is following
+    final_for_followers = []
+    final_for_following = []
+    if request.user.is_authenticated: # if the user is logged in
+        my_following = request.user.profile.following.all() 
+        for i in selected_user_following: 
+            print('? ',  i.user == request.user)
+            if i.user.profile in my_following:      # if the user is followed by the logged in user, it can be unfollowed    
+                final_for_following.append(False)
+            if i.user.profile not in my_following:  # if the user is not followed by the logged in user, it can be followed
+                final_for_following.append(True)
+            if i.user == request.user:      # if it is a logged in user it can neither be unfollowed nor followed
+                final_for_following.append(False)
+        for i in selected_user_followers:
+            if i.user.profile in my_following:      # if the user is followed by the logged in user, it can be unfollowed 
+                final_for_followers.append(False)
+            if i.user.profile not in my_following:  # if the user is not followed by the logged in user, it can be followed
+                final_for_followers.append(True) 
+            if i.user == request.user:              # if it is a logged in user it can neither be unfollowed nor followed
+                final_for_followers.append(False)
+
     projects = ObservedProject.objects.filter(user=selected_user)
     update_possible = selected_user == request.user
-    print(update_possible)
-    context = {"selected_user": selected_user, 'projects' : projects, 'update_possible' : update_possible}
+    follow_possible = selected_user != request.user and selected_user.profile not in my_following and request.user.is_authenticated
+    unfollow_possible =  selected_user != request.user and selected_user.profile in my_following and request.user.is_authenticated
+    context = {"selected_user": selected_user, 'projects' : projects, 'update_possible' : update_possible, "selected_user_following" : selected_user_following, "selected_user_followers" : selected_user_followers, "follow_possible": follow_possible, "unfollow_possible": unfollow_possible, "final_for_following": final_for_following, "final_for_followers": final_for_followers, "request_user" : request.user, }
     return render(request, 'uks_app/profile.html', context)
 
 # user profile update
@@ -289,6 +342,64 @@ def profile_update(request, id=None):
         'p_form' : p_form
     }
     return render(request, 'uks_app/profile_update.html', context)
+
+#change code
+@require_http_methods(["POST"])
+@csrf_exempt
+def hook_receiver_view(request):
+    request_body_string = request.body.decode("utf-8")
+    data = json.loads(request_body_string)
+    commit_url=""
+    repository_url=""
+    message=""
+    try:
+        commits=data["commits"]
+        repository_url=data["repository"]["html_url"]
+        project= ObservedProject.objects.filter(git_repo = repository_url)
+        if len(project)!=0 :
+            for commit in commits:
+                commit_url=commit["url"]
+                message=commit["message"]
+                email=commit["author"]["email"]
+                username=commit["author"]["name"]
+                time=commit["timestamp"]
+                users=User.objects.filter(Q(email = email))
+                if len(users)==0:
+                    q = CodeChange.objects.create(url=commit_url, project=project.first(), message=message, date_time=time, github_username=username)
+                else:
+                    q = CodeChange.objects.create(url=commit_url, project=project.first(), message=message, user=users[0], date_time=time, github_username=username)
+                
+                #povezivanje sa issuima
+                regex_matches = re.findall('~(.+?)~', message)
+                regex_matches_close = re.findall('close ~(.+?)~', message)
+                
+                if len(regex_matches_close)!=0 :
+                    for match in regex_matches_close:
+                        issue= Issue.objects.filter(Q(title = match) & Q(project = project.first()))                        
+                        if len(issue) != 0:
+                            related_issue=issue.first()
+                            related_issue.state='CL'
+                            related_issue.save()
+                            if len(users)!=0:
+                                code_change_event = CodeChangeEvent.objects.create(code_change=q, issue=issue[0], time=time, user=users[0], closing_event=True)
+                            else:
+                                code_change_event = CodeChangeEvent.objects.create(code_change=q, issue=issue[0], time=time, closing_event=True)
+            
+                if len(regex_matches)!=0 :
+                    for match in regex_matches:
+                        if match not in regex_matches_close:
+                            issue= Issue.objects.filter(Q(title = match) & Q(project = project.first()))
+                            if len(issue) != 0:
+                                if len(users)!=0:
+                                    code_change_event = CodeChangeEvent.objects.create(code_change=q, issue=issue[0], time=time, user=users[0], closing_event=False)
+                                else:
+                                    code_change_event = CodeChangeEvent.objects.create(code_change=q, issue=issue[0], time=time, closing_event=False)
+            return HttpResponse('success')
+        else:
+            return HttpResponse('Project does not exist', status=400)
+
+    except Exception as e:
+        return HttpResponse('Data is not valid', status=400)
 
 #delete project
 class ProjectDelete(DeleteView):
@@ -374,7 +485,6 @@ def create_update_milestone(request, project_id, milestone_id=None):
 # choose label
 @login_required
 def choose_milestone(request, issue_id):
-
     
     #get issue and project
     observed_issue = get_object_or_404(Issue, pk=issue_id)
@@ -425,8 +535,7 @@ def remove_milestone(request, milestone_id, issue_id):
 # new comment form
 @login_required
 def create_update_comment(request, issue_id, comment_id=None):
-    #get issue
-    observed_issue = get_object_or_404(Issue, id=issue_id)
+    observed_issue = get_object_or_404(Issue, id=issue_id)  #get issue
     #comment_id == None -> Create
     #comment_id != None -> Update
     observed_comment = get_object_or_404(Comment, pk=comment_id) if comment_id else None
@@ -491,4 +600,73 @@ class OneCommentView(generic.DetailView):
     model = Comment
     template_name = 'uks_app/one_comment.html'
 
-    
+class ChartData(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, project_id, format=None):
+        data = {}
+        temp_data = []
+
+        issues = Issue.objects.filter(project_id=project_id).all()
+        for issue in issues:
+
+            create_date = issue.create_time.date()
+
+            temp_data.append((str(create_date), 'open'))
+
+            events = Event.objects.filter(issue_id=issue.id).order_by('time')
+
+            for event in events:
+                if event.__class__.__name__ == 'IssueChange':
+                    date = event.time.date()
+                    if event.state == 'CL':
+                        temp_data.append((str(date), 'close'))
+                    else:
+                        temp_data.append((str(date), 'open'))
+
+        opened_issues = 0
+
+        sorted_data = sorted(temp_data, key=lambda x: x[0])
+
+        for entry in sorted_data:
+            if entry[1] == 'open':
+                opened_issues += 1
+            else:
+                opened_issues -= 1
+            data[str(entry[0])] = opened_issues
+
+
+        labels = [] 
+        values = []
+
+        for i in sorted (data.keys()) :  
+            labels.append(i)
+            values.append(data[i])
+
+        response_data = {
+            "labels": labels,
+            "values": values,
+        }
+        return Response(response_data)
+
+@login_required
+@api_view(['POST', ])
+def follow(request):
+    user = request.user # ulogovani korisnik
+    if request.method == 'POST':
+        selected_user = get_object_or_404(User, username=request.data['username']) # onaj kojeg zelim da zapratim
+        user.profile.following.add(selected_user.profile)   
+        selected_user.profile.followers.add(user.profile)
+    return HttpResponse('Followed', status=200)
+
+@login_required
+@api_view(['POST', ])
+def unfollow(request):
+    user = request.user # ulogovani korisnik
+    if request.method == 'POST':
+        selected_user = get_object_or_404(User, username=request.data['username']) # onaj kojeg zelim da otpratim
+        user.profile.following.remove(selected_user.profile)   
+        selected_user.profile.followers.remove(user.profile)
+    return HttpResponse('Unfollowed', status=200)        
+
