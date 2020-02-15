@@ -17,14 +17,19 @@
                 <a href="{% url 'change_state_issue' object.project.id object.id %}" class="btn btn-info" data-toggle="tooltip" data-placement="bottom" title="Reopen issue"><i class="fas fa-exclamation-circle"></i></a>
             {% endif %}
                     <a href="{% url 'edit_issue' object.project.id object.id %}" class="btn btn-info" data-toggle="tooltip" data-placement="bottom" title="Edit issue"><i class="fas fa-edit"></i></a>
-            <a href="{% url 'delete_issue' object.project.id object.id %}" class="btn btn-secondary"><i class="fas fa-trash-alt" data-toggle="tooltip" data-placement="bottom" title="Delete issue"></i></a>
+            <a href="{% url 'delete_issue' object.id %}" class="btn btn-secondary"><i class="fas fa-trash-alt" data-toggle="tooltip" data-placement="bottom" title="Delete issue"></i></a>
         </span>
+</h6>
+
+<h6>
+    {% if issue.parent_issue != None %}
+        Parent issue: <a class="black-link" href="{% url 'one_issue' issue.parent_issue.id %}">{{issue.parent_issue.title}}</a>
+    {% endif %}
 </h6>
 
 <h6>
     {% if issue.state == 'CL'%}
         <i style="margin-right: 10px; margin-top: 8px; color: red" class="fas fa-exclamation-circle"></i>This issue is closed.
-    {% else %}
     {% endif %}
 </h6>
 
@@ -150,6 +155,28 @@
             </p>
         {% else %}
             <p style="font-size:x-small">There are currently no milestones.</p>
+        {% endif %}
+
+        <hr>
+
+        <p>Subissues
+        {% if user.is_authenticated %}
+            <span style="float: right;"> 
+                <a href="{% url 'choose_subissue' issue.id %}"><i style="margin-top: 6px; color:#17a2b8" class="fas fa-plus"></i></a></p>
+            </span>
+        {% endif %}
+        {% if  issue.subissues.all %}
+            <p  style="font-size:x-small; overflow: hidden; text-overflow: ellipsis;">
+                {% for subissue in issue.subissues.all %}
+                    <a class="black-link" href="{% url 'one_issue' subissue.id %}"><i style="margin-right: 10px; margin-top: 6px" class="fas fa-exclamation-circle"></i>{{subissue.title}}</a>
+                    {% if user.is_authenticated %}
+                        <a class="black-link" style="float: right;" href="{% url 'remove_subissue' issue.id subissue.id %}"><i style="margin-top: 6px;" class="fas fa-times"></i></a>
+                    {% endif %}
+                    </br>
+                {% endfor %}            
+            </p>
+        {% else %}
+            <p style="font-size:x-small">This issue doesn't have subissues.</p>
         {% endif %}
     </div>
 </div>
