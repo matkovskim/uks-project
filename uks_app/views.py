@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 
 from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange, CodeChangeEvent, IssueChange
-from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm, CommentForm
+from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm, CommentForm, ChooseSubissueForm
 import logging
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -21,6 +21,7 @@ import re
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 
 # home page
 def index(request): 
@@ -70,7 +71,7 @@ def create_update_issue(request, project_id, issue_id=None):
     #issue_id != None -> Update
     observed_issue = get_object_or_404(Issue, pk=issue_id) if issue_id else None
 
-    form = IssueForm(request.POST or None, instance=observed_issue)
+    form = IssueForm(data=request.POST or None, project=observed_project, iss=observed_issue, instance=observed_issue)
 
     if form.is_valid():
         issue = form.save(commit=False)
@@ -158,6 +159,76 @@ def choose_label(request, issue_id):
 
     return render(request, 'uks_app/choose_label.html', context)
 
+@login_required
+def choose_subissue(request, issue_id):
+
+    #get issue 
+    observed_issue = get_object_or_404(Issue, pk=issue_id)
+
+    form = ChooseSubissueForm(observed_issue, data=request.POST or None)
+
+    if form.is_valid():
+    
+        chosen_issues = form.cleaned_data['issues']
+        
+        for issue in chosen_issues:
+            if issue.parent_issue == None and issue != observed_issue:
+                issue.parent_issue = observed_issue
+
+                issue.save()
+        
+        return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
+
+    context = {
+        'form' : form,
+        'issue' : observed_issue
+    }
+
+    return render(request, 'uks_app/choose_subissue.html', context)
+
+@login_required
+def remove_subissue(request, issue_id, subissue_id):
+
+    #get issue
+    issue = get_object_or_404(Issue, id=issue_id)
+
+    #get subissue
+    subissue = get_object_or_404(Issue, id=subissue_id)
+
+    issue.subissues.remove(subissue)
+
+    return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
+
+# new subissue form
+@login_required
+def create_subissue(request, issue_id):
+
+    observed_issue = get_object_or_404(Issue, pk=issue_id)
+    observed_project = observed_issue.project
+
+    form = IssueForm(data=request.POST or None, project=observed_project, iss=observed_issue)
+
+    if form.is_valid():
+        issue = form.save(commit=False)
+        
+        #set project as foreign key
+        issue.project = observed_project
+
+        #set parent issue
+        issue.parent_issue = observed_issue
+
+        issue.create_time = datetime.datetime.now()
+
+        issue.save()
+        
+        return HttpResponseRedirect('/issue/' + str(issue_id) + '/')  
+    
+    context = {
+        'form' : form,
+        'cancel_url': "../"
+    }
+
+    return render(request, 'uks_app/create_update_issue.html', context)
 
 #change issue state
 def change_issue_state(request, project_id, issue_id):
@@ -206,7 +277,16 @@ def search_projects(request):
     observed_projects = ObservedProject.objects.filter(name__icontains=search_name.lower()).filter(public = 'True')
     issues_list =Issue.objects.filter(title__icontains=search_name.lower(), project__public='True')
     users_list=User.objects.filter(Q(first_name__icontains = search_name.lower()) | Q(last_name__icontains = search_name.lower()) | Q(username__icontains = search_name.lower()) & Q(is_staff='False'))
-    return render(request, 'uks_app/search_result.html', {'observed_projects': observed_projects, 'issues_list':issues_list, 'users_list':users_list})
+    user = request.user # logged in user
+    follow_possible = []
+    if user.is_authenticated: # if the user is logged in
+        users_following = user.profile.following.all() # users that the logged in user is following
+        for user in users_list:                        
+            if user.profile in users_following: # already follows, so he can only unfollow him
+                follow_possible.append(False) 
+            else:
+                follow_possible.append(True)    # he doesn't follow him, so he can follow him
+    return render(request, 'uks_app/search_result.html', {'observed_projects': observed_projects, 'issues_list':issues_list, 'users_list':users_list, 'follow_possible': follow_possible, 'request_user': user})
 
 # user registration 
 def register_user(request):
@@ -223,10 +303,34 @@ def register_user(request):
 # user profile
 def profile(request, id=None):
     selected_user = get_object_or_404(User, username=id)
+    selected_user_following = selected_user.profile.following.all() # users that the selected user is following    
+    selected_user_followers = selected_user.profile.followers.all() # users that the selected user is followed by
+    my_following = [] # users that the logged in user is following
+    final_for_followers = []
+    final_for_following = []
+    if request.user.is_authenticated: # if the user is logged in
+        my_following = request.user.profile.following.all() 
+        for i in selected_user_following: 
+            print('? ',  i.user == request.user)
+            if i.user.profile in my_following:      # if the user is followed by the logged in user, it can be unfollowed    
+                final_for_following.append(False)
+            if i.user.profile not in my_following:  # if the user is not followed by the logged in user, it can be followed
+                final_for_following.append(True)
+            if i.user == request.user:      # if it is a logged in user it can neither be unfollowed nor followed
+                final_for_following.append(False)
+        for i in selected_user_followers:
+            if i.user.profile in my_following:      # if the user is followed by the logged in user, it can be unfollowed 
+                final_for_followers.append(False)
+            if i.user.profile not in my_following:  # if the user is not followed by the logged in user, it can be followed
+                final_for_followers.append(True) 
+            if i.user == request.user:              # if it is a logged in user it can neither be unfollowed nor followed
+                final_for_followers.append(False)
+
     projects = ObservedProject.objects.filter(user=selected_user)
     update_possible = selected_user == request.user
-    print(update_possible)
-    context = {"selected_user": selected_user, 'projects' : projects, 'update_possible' : update_possible}
+    follow_possible = selected_user != request.user and selected_user.profile not in my_following and request.user.is_authenticated
+    unfollow_possible =  selected_user != request.user and selected_user.profile in my_following and request.user.is_authenticated
+    context = {"selected_user": selected_user, 'projects' : projects, 'update_possible' : update_possible, "selected_user_following" : selected_user_following, "selected_user_followers" : selected_user_followers, "follow_possible": follow_possible, "unfollow_possible": unfollow_possible, "final_for_following": final_for_following, "final_for_followers": final_for_followers, "request_user" : request.user, }
     return render(request, 'uks_app/profile.html', context)
 
 # user profile update
@@ -403,7 +507,6 @@ def create_update_milestone(request, project_id, milestone_id=None):
 # choose milestone
 @login_required
 def choose_milestone(request, issue_id):
-
     
     #get issue and project
     observed_issue = get_object_or_404(Issue, pk=issue_id)
@@ -460,8 +563,7 @@ def remove_milestone(request, milestone_id, issue_id):
 # new comment form
 @login_required
 def create_update_comment(request, issue_id, comment_id=None):
-    #get issue
-    observed_issue = get_object_or_404(Issue, id=issue_id)
+    observed_issue = get_object_or_404(Issue, id=issue_id)  #get issue
     #comment_id == None -> Create
     #comment_id != None -> Update
     observed_comment = get_object_or_404(Comment, pk=comment_id) if comment_id else None
@@ -575,6 +677,7 @@ class ChartData(APIView):
             "values": values,
         }
         return Response(response_data)
+
  
 @login_required
 def search_collaborators(request, project_id):
@@ -594,6 +697,27 @@ def search_collaborators(request, project_id):
         }
 
         return render(request, 'uks_app/add_collaborators.html', context)   
+
+@login_required
+@api_view(['POST', ])
+def follow(request):
+    user = request.user # ulogovani korisnik
+    if request.method == 'POST':
+        selected_user = get_object_or_404(User, username=request.data['username']) # onaj kojeg zelim da zapratim
+        user.profile.following.add(selected_user.profile)   
+        selected_user.profile.followers.add(user.profile)
+    return HttpResponse('Followed', status=200)
+
+@login_required
+@api_view(['POST', ])
+def unfollow(request):
+    user = request.user # ulogovani korisnik
+    if request.method == 'POST':
+        selected_user = get_object_or_404(User, username=request.data['username']) # onaj kojeg zelim da otpratim
+        user.profile.following.remove(selected_user.profile)   
+        selected_user.profile.followers.remove(user.profile)
+    return HttpResponse('Unfollowed', status=200)        
+
 
     return HttpResponse('Unauthorized', status=401)  
 

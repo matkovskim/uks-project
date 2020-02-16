@@ -25,8 +25,19 @@ class IssueForm(forms.ModelForm):
         model = Issue
         fields = [
             'title',
-            'description'
+            'description',
+            'parent_issue'
         ]
+
+    def __init__(self, project, iss, *args, **kwargs):
+        super(IssueForm, self).__init__(*args, **kwargs)
+
+        if iss == None:
+            issues = project.issue_set.all()
+
+            self.fields['parent_issue'] = forms.ModelChoiceField(queryset=issues, required=False) 
+        else:
+            del self.fields['parent_issue']
 
 class CommentForm(forms.ModelForm):
     class Meta:
@@ -82,6 +93,21 @@ class ChooseLabelForm(forms.Form):
 
     def save(self, commit=True):
         print(self.fields['labels'])
+
+class ChooseSubissueForm(forms.Form): 
+
+    def __init__(self, observed_issue, *args, **kwargs):
+        super(ChooseSubissueForm, self).__init__(*args, **kwargs)
+
+        issues = observed_issue.project.issue_set.exclude(id=observed_issue.id).exclude(parent_issue__isnull=False).exclude(subissues__isnull=False)
+
+        if observed_issue.parent_issue:
+            issues = issues.exclude(id=observed_issue.parent_issue.id)
+
+        self.fields['issues'] = forms.ModelMultipleChoiceField(queryset=issues)
+
+    def save(self, commit=True):
+        print(self.fields['issues'])
 
 
 class UserRegisterForm(UserCreationForm):
