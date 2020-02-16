@@ -11,10 +11,12 @@
 
 <h6 style="margin-bottom: 50px">{{object.description}}
     <span style="float: right;">
+        {% if user == object.project.user or user in object.project.collaborators.all %}
         <a href="{% url 'edit_milestone' object.project.id object.id %}" class="btn btn-info"><i
                 style="margin-right: 10px" class="fas fa-edit"></i>Edit</a>
         <a href="{% url 'delete_milestone' object.project.id object.id %}" class="btn btn-secondary"><i
                 style="margin-right: 10px" class="fas fa-trash-alt"></i>Delete</a>
+        {% endif %}
     </span>
 </h6>
 

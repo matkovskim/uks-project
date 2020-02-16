@@ -145,7 +145,7 @@
         <hr>
 
         <p>Labels
-        {% if user.is_authenticated %}
+        {% if user == object.project.user or user in object.project.collaborators.all %}
             <span style="float: right;"> 
                 <a href="{% url 'choose_label' issue.id %}"><i style="margin-top: 6px; color:#17a2b8" class="fas fa-plus"></i></a></p>
             </span>
@@ -154,7 +154,7 @@
             <p style="font-size:x-small">
                 {% for label in issue.labels.all %}
                     <i style="margin-right: 10px; margin-top: 6px; color: {{label.color}}" class="fas fa-tag"></i>{{label.name}} 
-                    {% if user.is_authenticated %}
+                    {% if user == object.project.user or user in object.project.collaborators.all %}
                         <a class="black-link" style="float: right;" href="{% url 'remove_label' issue.id label.id %}"><i style="margin-top: 6px;" class="fas fa-times"></i></a>
                     {% endif %}
                     </br>
@@ -167,7 +167,7 @@
         <hr>
 
         <p>Milestones
-        {% if user.is_authenticated %}
+        {% if user == object.project.user or user in object.project.collaborators.all %}
         <span style="float: right;"> 
             <a href="{% url 'choose_milestone' issue.id %}"><i style="margin-top: 6px; color:#17a2b8" class="fas fa-plus"></i></a></p>
         </span>
@@ -176,7 +176,7 @@
             <p style="font-size:x-small">
                 {% for milestone in issue.milestones.all %}
                     <i style="margin-right: 10px; margin-top: 6px;" class="fas fa-check-circle"></i>{{milestone.title}} 
-                    {% if user.is_authenticated %}
+                    {% if user == object.project.user or user in object.project.collaborators.all %}
                         <a class="black-link" style="float: right;" href="{% url 'remove_milestone' issue.id milestone.id %}"><i style="margin-top: 6px;" class="fas fa-times"></i></a>
                     {% endif %}
                     </br>

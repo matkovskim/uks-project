@@ -1,7 +1,9 @@
+from django.conf.urls import url
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
+from .models import ObservedProject
 from . import views
 
 urlpatterns = [ 
@@ -60,6 +62,11 @@ urlpatterns = [
     path('api/hello/', views.hook_receiver_view),
 
     path('api/chart/data/<int:project_id>', views.ChartData.as_view()),
+
+    path('project/<int:project_id>/add-collaborators/', views.search_collaborators, name='search_collaborators'),
+    path('project/<int:project_id>/add-collaborators/<int:user_id>', views.add_collaborators, name='add_collaborators'),
+     path('project/<int:project_id>/remove-collaborators/<int:user_id>', views.remove_collaborators, name='remove_collaborators')
+    
 ]
 
 if settings.DEBUG:

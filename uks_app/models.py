@@ -16,6 +16,7 @@ class ObservedProject(models.Model):
     git_repo = models.CharField(max_length=200, blank=False)
     description = models.TextField(max_length=200, blank=True)
     public=models.BooleanField(default=True)
+    collaborators = models.ManyToManyField(User, related_name='collaborators')
 
     def __str__(self):
         return self.name
