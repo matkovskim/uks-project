@@ -37,6 +37,10 @@ def create_update_project(request, project_id=None):
     #project_id != None -> Update
     observed_project = get_object_or_404(ObservedProject, pk=project_id) if project_id else None
 
+    # only project owner can make changes to the project
+    if project_id != None and observed_project.user != request.user:
+        return HttpResponse('Unauthorized', status=401)
+
     form = ProjectForm(request.POST or None, instance=observed_project)
 
     if form.is_valid():
@@ -100,7 +104,12 @@ def create_label(request, issue_id):
 
     #get issue
     observed_issue = get_object_or_404(Issue, pk=issue_id)
+    observed_project = observed_issue.project
 
+    # only project owner and collaborators can create a new label
+    if request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+        return HttpResponse('Unauthorized', status=401)
+    
     form = LabelForm(request.POST or None)
 
     if form.is_valid():
@@ -117,6 +126,7 @@ def create_label(request, issue_id):
     }
 
     return render(request, 'uks_app/create_label.html', context)
+    
 
 # choose label
 @login_required
@@ -125,13 +135,15 @@ def choose_label(request, issue_id):
     #get issue and project
     observed_issue = get_object_or_404(Issue, pk=issue_id)
     observed_project = observed_issue.project
-
+    # only project owner and collaborators can choose a label
+    if request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+        return HttpResponse('Unauthorized', status=401)
+    
     project_issues = observed_project.issue_set.exclude(id=issue_id)
 
     form = ChooseLabelForm(project_issues, observed_issue, data=request.POST or None)
 
     if form.is_valid():
-    
         chosen_labels = form.cleaned_data['labels']
         
         for label in chosen_labels:
@@ -244,7 +256,11 @@ def remove_label(request, label_id, issue_id):
 
     #get issue
     issue = get_object_or_404(Issue, id=issue_id)
+    observed_project = issue.project
 
+    if request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+        return HttpResponse('Unauthorized', status=401)
+    
     #get label
     label = get_object_or_404(Label, id=label_id)
 
@@ -454,13 +470,16 @@ class MilestoneDelete(DeleteView):
     success_url = reverse_lazy('all_projects')
 
 # new milestone
+
+@login_required
 def create_update_milestone(request, project_id, milestone_id=None):
 
     #get observed project
     observed_project = get_object_or_404(ObservedProject, id=project_id)
-
-    #milestone_id == None -> Create
-    #milestone_id != None -> Update
+    if request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+        return HttpResponse('Unauthorized', status=401)
+        #milestone_id == None -> Create
+        #milestone_id != None -> Update
     observed_milestone = get_object_or_404(Milestone, pk=milestone_id) if milestone_id else None
 
     form = MilestoneForm(request.POST or None, instance=observed_milestone)
@@ -482,13 +501,19 @@ def create_update_milestone(request, project_id, milestone_id=None):
     }
     return render(request, 'uks_app/create_update_milestone.html', context)
     
-# choose label
+   
+
+
+# choose milestone
 @login_required
 def choose_milestone(request, issue_id):
     
     #get issue and project
     observed_issue = get_object_or_404(Issue, pk=issue_id)
     observed_project = observed_issue.project
+
+    if request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+        return HttpResponse('Unauthorized', status=401)
 
     form = ChooseMilestoneForm(observed_project, observed_issue, data=request.POST or None)
 
@@ -521,7 +546,10 @@ def remove_milestone(request, milestone_id, issue_id):
 
     #get issue
     issue = get_object_or_404(Issue, id=issue_id)
-
+    observed_project = issue.project
+    if request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+        return HttpResponse('Unauthorized', status=401)
+    
     #get milestone
     milestone = get_object_or_404(Milestone, id=milestone_id)
 
@@ -650,6 +678,26 @@ class ChartData(APIView):
         }
         return Response(response_data)
 
+ 
+@login_required
+def search_collaborators(request, project_id):
+    
+    #get observed project
+    observed_project = get_object_or_404(ObservedProject, id=project_id)
+    if request.user == observed_project.user:
+        if request.method == 'POST':
+            search_name = request.POST['search']
+            result = User.objects.filter(Q(first_name__icontains = search_name.lower()) | Q(last_name__icontains = search_name.lower()) | Q(username__icontains = search_name.lower()) & Q(is_staff='False')).exclude(username=observed_project.user.username).exclude(id__in=[user.id for user in observed_project.collaborators.all()]).distinct()
+        else:
+            result = []
+
+        context = {
+            "observed_project": observed_project,
+            "result": result,
+        }
+
+        return render(request, 'uks_app/add_collaborators.html', context)   
+
 @login_required
 @api_view(['POST', ])
 def follow(request):
@@ -670,3 +718,29 @@ def unfollow(request):
         selected_user.profile.followers.remove(user.profile)
     return HttpResponse('Unfollowed', status=200)        
 
+
+    return HttpResponse('Unauthorized', status=401)  
+
+@login_required
+def add_collaborators(request, project_id, user_id):
+    #get observed project
+    observed_project = get_object_or_404(ObservedProject, id=project_id)
+    if request.user == observed_project.user:
+        #get user
+        user = get_object_or_404(User, id=user_id)
+        observed_project.collaborators.add(user)
+        return HttpResponseRedirect('/project/' + str(project_id) + '/')
+
+    return HttpResponse('Unauthorized', status=401)
+
+@login_required
+def remove_collaborators(request, project_id, user_id):
+    #get observed project
+    observed_project = get_object_or_404(ObservedProject, id=project_id)
+    if request.user == observed_project.user:
+        #get user
+        user = get_object_or_404(User, id=user_id)
+        observed_project.collaborators.remove(user)
+        return HttpResponseRedirect('/project/' + str(project_id) + '/')
+    
+    return HttpResponse('Unauthorized', status=401)
