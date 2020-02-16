@@ -24,6 +24,7 @@ class Issue(models.Model):
     title = models.CharField(max_length=200, blank=False)
     project = models.ForeignKey(to=ObservedProject, null=False, on_delete=models.CASCADE)
     description = models.TextField(max_length=200, blank=True)
+    parent_issue = models.ForeignKey('self', null=True, related_name='subissues', on_delete=models.CASCADE)
     state = models.CharField(
         max_length=2,
         choices=PROBLEM_STATE,

@@ -5,7 +5,7 @@ from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 
 from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange, CodeChangeEvent, IssueChange
-from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm, CommentForm
+from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm, CommentForm, ChooseSubissueForm
 import logging
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -67,7 +67,7 @@ def create_update_issue(request, project_id, issue_id=None):
     #issue_id != None -> Update
     observed_issue = get_object_or_404(Issue, pk=issue_id) if issue_id else None
 
-    form = IssueForm(request.POST or None, instance=observed_issue)
+    form = IssueForm(data=request.POST or None, project=observed_project, iss=observed_issue, instance=observed_issue)
 
     if form.is_valid():
         issue = form.save(commit=False)
@@ -147,6 +147,76 @@ def choose_label(request, issue_id):
 
     return render(request, 'uks_app/choose_label.html', context)
 
+@login_required
+def choose_subissue(request, issue_id):
+
+    #get issue 
+    observed_issue = get_object_or_404(Issue, pk=issue_id)
+
+    form = ChooseSubissueForm(observed_issue, data=request.POST or None)
+
+    if form.is_valid():
+    
+        chosen_issues = form.cleaned_data['issues']
+        
+        for issue in chosen_issues:
+            if issue.parent_issue == None and issue != observed_issue:
+                issue.parent_issue = observed_issue
+
+                issue.save()
+        
+        return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
+
+    context = {
+        'form' : form,
+        'issue' : observed_issue
+    }
+
+    return render(request, 'uks_app/choose_subissue.html', context)
+
+@login_required
+def remove_subissue(request, issue_id, subissue_id):
+
+    #get issue
+    issue = get_object_or_404(Issue, id=issue_id)
+
+    #get subissue
+    subissue = get_object_or_404(Issue, id=subissue_id)
+
+    issue.subissues.remove(subissue)
+
+    return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
+
+# new subissue form
+@login_required
+def create_subissue(request, issue_id):
+
+    observed_issue = get_object_or_404(Issue, pk=issue_id)
+    observed_project = observed_issue.project
+
+    form = IssueForm(data=request.POST or None, project=observed_project, iss=observed_issue)
+
+    if form.is_valid():
+        issue = form.save(commit=False)
+        
+        #set project as foreign key
+        issue.project = observed_project
+
+        #set parent issue
+        issue.parent_issue = observed_issue
+
+        issue.create_time = datetime.datetime.now()
+
+        issue.save()
+        
+        return HttpResponseRedirect('/issue/' + str(issue_id) + '/')  
+    
+    context = {
+        'form' : form,
+        'cancel_url': "../"
+    }
+
+    return render(request, 'uks_app/create_update_issue.html', context)
 
 #change issue state
 def change_issue_state(request, project_id, issue_id):

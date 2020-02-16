@@ -17,9 +17,14 @@ urlpatterns = [
     #issues
     path('project/<int:project_id>/issue/new/', views.create_update_issue, name='new_issue'),
     path('issue/<int:pk>/', views.OneIssueView.as_view(), name='one_issue'),
-    path('project/<int:project_id>/issue/<int:pk>/delete/', views.IssueDelete.as_view(), name='delete_issue'),
+    path('issue/<int:pk>/delete/', views.IssueDelete.as_view(), name='delete_issue'),
     path('project/<int:project_id>/issue/<int:issue_id>/edit/', views.create_update_issue, name='edit_issue'),
     path('project/<int:project_id>/issue/<int:issue_id>/changestate/', views.change_issue_state, name='change_state_issue'),
+
+    #subissues
+    path('issue/<int:issue_id>/subissue/choose', views.choose_subissue, name='choose_subissue'),
+    path('issue/<int:issue_id>/subissue/<int:subissue_id>/delete', views.remove_subissue, name='remove_subissue'),
+    path('issue/<int:issue_id>/subissue/new', views.create_subissue, name='new_subissue'),
 
     #comments
     path('issue/<int:issue_id>/comment/new/', views.create_update_comment, name='new_comment'),

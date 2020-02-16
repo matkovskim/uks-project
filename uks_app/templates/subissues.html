@@ -1,0 +1,18 @@
+{% for issue in issues_list.all %}
+    <tr>
+        <td>
+            <a style="margin-left: {{margin |add:20}}px" class="black-link" href="{% url 'one_issue' issue.id %}"><i style="margin-right: 10px" class="fas fa-angle-right"></i>{{issue.title}}</a>
+            {% for lab in issue.labels.all %}
+                <i style="margin-left: 10px; margin-top: 6px; color: {{lab.color}}" class="fas fa-tag" data-toggle="tooltip" data-placement="bottom" title="{{lab.name}}"></i>
+            {% endfor %}
+        </td>
+        <td class="text-right">
+            {% if issue.state == 'OP'%}
+                <i style="margin-top: 6px; color: green" class="fas fa-exclamation-circle"></i>
+            {% else %}
+                <i style="margin-top: 6px; color: red" class="fas fa-exclamation-circle"></i>
+            {% endif %}
+        </td>
+    </tr>
+    {% include 'subissues.html' with issues_list=issue.subissues margin=margin|add:20 %}
+{% endfor %}
