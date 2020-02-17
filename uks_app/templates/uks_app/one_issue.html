@@ -52,7 +52,7 @@
                         {% if modelclass == "MilestoneChange" %} 
                             <div class="row">       
                                 <i style="margin-right: 10px; margin-top: 8px; color: #17a2b8" class="fas fa-map-signs"></i>
-                                <p>{{event.checkpoint.title}}
+                                <p> {{event.checkpoint.title}}
                                 {% if event.add %}
                                     <br>Milestone added!</p>
                                 {% else %}
@@ -65,7 +65,7 @@
                             
                             <div class="d-flex bd-highlight border-bottom mb-2">
                             <div class="p-2 bd-highlight">
-                                          <img style="margin-right: 5px; margin-bottom: 7px;" class="rounded " width="30" height="30" src="{{ event.user.profile.image.url }}">
+                                    <img style="margin-right: 5px; margin-bottom: 7px;" class="rounded " width="30" height="30" src="{{ event.user.profile.image.url }}">
                                     <span style="font-size: 1.25rem; color: #17a2b8" class="card-title"> {{event.user}} </span>
                                     <span class="text-muted"> commented on {{event.time}} </span>
                             </div>
