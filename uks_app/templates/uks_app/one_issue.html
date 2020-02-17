@@ -3,13 +3,17 @@
 {% block content %}
 {% load custom_filters %}
 
-<h3 class="mb-3">{{object.title}}
+<h4 class="mb-3">{{object.title}}
+    <small class="text-muted ml-2">
+        ~{{object.id}}~
+    </small>
     <span style="float: right;">
         <a href="{% url 'one_project' object.project.id %}" class="btn btn-secondary"><i class="fas fa-arrow-circle-left mr-2"></i>Return to project</a>
     </span>
-</h3>
+</h4>
 
 <h6 class="mb-4">{{object.description}}
+    {% if user == object.user or user in object.collaborators.all %}
         <span style="float: right;">
             {% if object.state == "OP" %}
                 <a href="{% url 'change_state_issue' object.project.id object.id %}" class="btn btn-secondary" data-toggle="tooltip" data-placement="bottom" title="Close issue"><i class="fas fa-times-circle"></i></a>
@@ -19,6 +23,7 @@
                     <a href="{% url 'edit_issue' object.project.id object.id %}" class="btn btn-info" data-toggle="tooltip" data-placement="bottom" title="Edit issue"><i class="fas fa-edit"></i></a>
             <a href="{% url 'delete_issue' object.id %}" class="btn btn-secondary"><i class="fas fa-trash-alt" data-toggle="tooltip" data-placement="bottom" title="Delete issue"></i></a>
         </span>
+    {% endif %}
 </h6>
 
 <h6>
@@ -36,7 +41,7 @@
 <hr>
 
 <div >
-    {% if user.is_authenticated %}
+    {% if object.project.public == True and user.is_authenticated or object.project.public == False and user == object.project.user or object.project.public == False and user in object.project.collaborators.all %}
         <span><a href="{% url 'new_comment' object.id %}" style="margin-bottom: 10px" class="btn btn-info"><i style="margin-right: 10px" class="fas fa-plus-circle"></i>New comment</a></span>
     {% endif %}
 </div>
@@ -221,7 +226,7 @@
         <hr>
 
         <p>Subissues
-        {% if user.is_authenticated %}
+        {% if user == object.project.user or user in object.project.collaborators.all %}
             <span style="float: right;"> 
                 <a href="{% url 'choose_subissue' issue.id %}"><i style="margin-top: 6px; color:#17a2b8" class="fas fa-plus"></i></a></p>
             </span>
@@ -230,7 +235,7 @@
             <p  style="font-size:x-small; overflow: hidden; text-overflow: ellipsis;">
                 {% for subissue in issue.subissues.all %}
                     <a class="black-link" href="{% url 'one_issue' subissue.id %}"><i style="margin-right: 10px; margin-top: 6px" class="fas fa-exclamation-circle"></i>{{subissue.title}}</a>
-                    {% if user.is_authenticated %}
+                    {% if user == object.project.user or user in object.project.collaborators.all %}
                         <a class="black-link" style="float: right;" href="{% url 'remove_subissue' issue.id subissue.id %}"><i style="margin-top: 6px;" class="fas fa-times"></i></a>
                     {% endif %}
                     </br>

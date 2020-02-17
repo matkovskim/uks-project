@@ -3,6 +3,7 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.auth.decorators import login_required
 from .models import ObservedProject
 from . import views
 
@@ -12,14 +13,14 @@ urlpatterns = [
     #projects
     path('project/', views.ProjectView.as_view(), name='all_projects'),
     path('project/new/', views.create_update_project, name='new_project'),
-    path('project/<int:pk>/delete/', views.ProjectDelete.as_view(), name='delete_project'),
+    path('project/<int:pk>/delete/', login_required(views.ProjectDelete.as_view()), name='delete_project'),
     path('project/<int:project_id>/edit/', views.create_update_project, name='edit_project'),
     path('project/<int:pk>/', views.OneProjectView.as_view(), name='one_project'),
 
     #issues
     path('project/<int:project_id>/issue/new/', views.create_update_issue, name='new_issue'),
     path('issue/<int:pk>/', views.OneIssueView.as_view(), name='one_issue'),
-    path('issue/<int:pk>/delete/', views.IssueDelete.as_view(), name='delete_issue'),
+    path('issue/<int:pk>/delete/', login_required(views.IssueDelete.as_view()), name='delete_issue'),
     path('project/<int:project_id>/issue/<int:issue_id>/edit/', views.create_update_issue, name='edit_issue'),
     path('project/<int:project_id>/issue/<int:issue_id>/changestate/', views.change_issue_state, name='change_state_issue'),
     path('issue/<int:issue_id>/issue/choose', views.assign_issue, name='assign_issue'),
@@ -38,7 +39,7 @@ urlpatterns = [
     #milestone
     path('project/<int:project_id>/milestone/new/', views.create_update_milestone, name='new_milestone'),
     path('project/<int:project_id>/milestone/<int:pk>/', views.OneMilestoneView.as_view(), name='one_milestone'),
-    path('project/<int:project_id>/milestone/<int:pk>/delete/', views.MilestoneDelete.as_view(), name='delete_milestone'),
+    path('project/<int:project_id>/milestone/<int:pk>/delete/', login_required(views.MilestoneDelete.as_view()), name='delete_milestone'),
     path('project/<int:project_id>/milestone/<int:milestone_id>/edit/', views.create_update_milestone, name='edit_milestone'),
 
     # issue milestone

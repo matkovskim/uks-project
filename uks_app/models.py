@@ -61,6 +61,11 @@ class Event(PolymorphicModel):
     user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE)
     issue = models.ForeignKey(to=Issue, null=False, on_delete=models.CASCADE)
 
+    non_polymorphic = models.Manager()
+
+    class Meta:
+        base_manager_name = 'non_polymorphic'
+
 class Comment(Event):
     description = models.CharField(max_length=200, blank=False)
 

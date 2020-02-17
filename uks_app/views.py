@@ -62,6 +62,7 @@ def create_update_project(request, project_id=None):
     return render(request, 'uks_app/create_update_project.html', context)
 
 # new issue form
+@login_required
 def create_update_issue(request, project_id, issue_id=None):
 
     #get observed project
@@ -70,6 +71,14 @@ def create_update_issue(request, project_id, issue_id=None):
     #issue_id == None -> Create
     #issue_id != None -> Update
     observed_issue = get_object_or_404(Issue, pk=issue_id) if issue_id else None
+
+    # only project owner and collaborators can create a public issue
+    if issue_id == None and observed_project.public == False and request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+        return HttpResponse('Unauthorized', status=401)
+    
+    # only project owner and collaborators can update a issue
+    if issue_id != None and request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+        return HttpResponse('Unauthorized', status=401)
 
     form = IssueForm(data=request.POST or None, project=observed_project, iss=observed_issue, instance=observed_issue)
 
@@ -135,6 +144,7 @@ def choose_label(request, issue_id):
     #get issue and project
     observed_issue = get_object_or_404(Issue, pk=issue_id)
     observed_project = observed_issue.project
+
     # only project owner and collaborators can choose a label
     if request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
         return HttpResponse('Unauthorized', status=401)
@@ -164,6 +174,11 @@ def choose_subissue(request, issue_id):
 
     #get issue 
     observed_issue = get_object_or_404(Issue, pk=issue_id)
+    observed_project = observed_issue.project
+
+    # only project owner and collaborators can choose a subissue
+    if request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+        return HttpResponse('Unauthorized', status=401)
 
     form = ChooseSubissueForm(observed_issue, data=request.POST or None)
 
@@ -191,6 +206,11 @@ def remove_subissue(request, issue_id, subissue_id):
 
     #get issue
     issue = get_object_or_404(Issue, id=issue_id)
+    observed_project = issue.project
+
+    # only project owner and collaborators can remove a subissue
+    if request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+        return HttpResponse('Unauthorized', status=401)
 
     #get subissue
     subissue = get_object_or_404(Issue, id=subissue_id)
@@ -205,6 +225,10 @@ def create_subissue(request, issue_id):
 
     observed_issue = get_object_or_404(Issue, pk=issue_id)
     observed_project = observed_issue.project
+
+    # only project owner and collaborators can create a subissue
+    if request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+        return HttpResponse('Unauthorized', status=401)
 
     form = IssueForm(data=request.POST or None, project=observed_project, iss=observed_issue)
 
@@ -235,6 +259,10 @@ def change_issue_state(request, project_id, issue_id):
 
     #get observed project
     observed_project = get_object_or_404(ObservedProject, id=project_id)
+
+    # only project owner and collaborators can change issue state
+    if request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+        return HttpResponse('Unauthorized', status=401)
     
     #get issue
     observed_issue = get_object_or_404(Issue, id=issue_id)
@@ -453,12 +481,29 @@ class ProjectDelete(DeleteView):
     template_name = 'uks_app/delete_project.html'
     model = ObservedProject
 
+    def dispatch(self, request, *args, **kwargs):
+       entity = get_object_or_404(ObservedProject, pk=kwargs['pk'])
+       user = request.user
+
+       if user != entity.user:
+           return HttpResponse('Unauthorized', status=401)
+       return super(ProjectDelete, self).dispatch(request, *args, **kwargs)
+
     success_url = reverse_lazy('all_projects')
 
 #delete issue
 class IssueDelete(DeleteView):
     template_name = 'uks_app/delete_issue.html'
     model = Issue
+
+    def dispatch(self, request, *args, **kwargs):
+       entity = get_object_or_404(Issue, pk=kwargs['pk'])
+       user = request.user
+       observed_project = entity.project
+
+       if request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+           return HttpResponse('Unauthorized', status=401)
+       return super(IssueDelete, self).dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
         project = self.object.project
@@ -470,7 +515,7 @@ class ProjectView(generic.ListView):
     context_object_name = 'project_list'
 
     def get_queryset(self):
-        return ObservedProject.objects.all()
+        return ObservedProject.objects.filter(public=True).all()
 
 # one project detailed view
 class OneProjectView(generic.DetailView):
@@ -498,10 +543,18 @@ class MilestoneDelete(DeleteView):
     template_name = 'uks_app/delete_issue.html'
     model = Milestone
 
+    def dispatch(self, request, *args, **kwargs):
+       entity = get_object_or_404(Milestone, pk=kwargs['pk'])
+       user = request.user
+       observed_project = entity.project
+
+       if request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+           return HttpResponse('Unauthorized', status=401)
+       return super(MilestoneDelete, self).dispatch(request, *args, **kwargs)
+
     success_url = reverse_lazy('all_projects')
 
 # new milestone
-
 @login_required
 def create_update_milestone(request, project_id, milestone_id=None):
 
@@ -595,6 +648,11 @@ def remove_milestone(request, milestone_id, issue_id):
 @login_required
 def create_update_comment(request, issue_id, comment_id=None):
     observed_issue = get_object_or_404(Issue, id=issue_id)  #get issue
+    observed_project = observed_issue.project
+    # only project owner and collaborators can create comments
+    if observed_project.public == False and request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+        return HttpResponse('Unauthorized', status=401)
+
     #comment_id == None -> Create
     #comment_id != None -> Update
     observed_comment = get_object_or_404(Comment, pk=comment_id) if comment_id else None
