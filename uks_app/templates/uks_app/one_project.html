@@ -189,17 +189,21 @@ function setChart(){
                 <div style="margin-top: 20px">
                     {% if object.milestone_set.all %}
                         {% for milestone in object.milestone_set.all %}
-                            <div class="card">
+                            <div class="card mb-2">
                                 <div class="card-body">
-                                    <div class="row d-flex">
-                                        <h5 class="card-title"><a href="{% url 'one_milestone' object.id milestone.id %}">{{milestone.title}}</a></h5> 
-                                        <h5 class="ml-auto">Due date: {{milestone.date}}</h5>
+                                    <div class="d-flex bd-highlight border-bottom mb-2">
+                                        <div class=" bd-highlight">
+                                            <a class="blue-link" style="font-size: 1.25rem" href="{% url 'one_milestone' object.id milestone.id %}">{{milestone.title}}</a> 
+                                        </div>
+                                        <div class="ml-auto  bd-highlight text-muted">
+                                            <p class="ml-auto">Due date: {{milestone.date}}</p>
+                                        </div>
                                     </div>
-                                    <div class="row">
-                                        <p class="card-text">{{milestone.description}}</p>
-                                    </div>
+                                <div class="row">
+                                    <p class="card-text ml-3">{{milestone.description}}</p>
                                 </div>
                             </div>
+                        </div>
                         {% endfor %}
                     {% else %}
                         <p>There are no milestones for this project.</p>
