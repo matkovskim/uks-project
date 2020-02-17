@@ -4,7 +4,7 @@ from django.views import generic
 from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 
-from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange, CodeChangeEvent, AssignIssueEvent, IssueChange
+from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange, CodeChangeEvent, AssignIssueEvent, IssueChange, LableEvent, SubIssueEvent
 from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm, CommentForm, ChooseSubissueForm, AssignIssueForm
 import logging
 from django.contrib import messages
@@ -127,6 +127,8 @@ def create_label(request, issue_id):
         #set issue as foreign key
         label.issue.add(observed_issue)
         label.save()
+
+        q = LableEvent.objects.create(user=request.user, time= datetime.datetime.now(), issue=observed_issue, label=label, state="CR")
         
         return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
 
@@ -159,6 +161,7 @@ def choose_label(request, issue_id):
         for label in chosen_labels:
             label.issue.add(observed_issue)
             label.save()
+            q = LableEvent.objects.create(user=request.user, time= datetime.datetime.now(), issue=observed_issue, label=label, state="CR")
         
         return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
 
@@ -191,6 +194,8 @@ def choose_subissue(request, issue_id):
                 issue.parent_issue = observed_issue
 
                 issue.save()
+                
+                q = SubIssueEvent.objects.create(user=request.user, time= datetime.datetime.now(), issue=observed_issue, state="CR", subissue=issue)
         
         return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
 
@@ -216,6 +221,8 @@ def remove_subissue(request, issue_id, subissue_id):
     subissue = get_object_or_404(Issue, id=subissue_id)
 
     issue.subissues.remove(subissue)
+
+    q = SubIssueEvent.objects.create(user=request.user, time= datetime.datetime.now(), issue=issue, state="RE", subissue=subissue)
 
     return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
 
@@ -244,6 +251,8 @@ def create_subissue(request, issue_id):
         issue.create_time = datetime.datetime.now()
 
         issue.save()
+
+        q = SubIssueEvent.objects.create(user=request.user, time= datetime.datetime.now(), issue=observed_issue, state="CR", subissue=issue)
         
         return HttpResponseRedirect('/issue/' + str(issue_id) + '/')  
     
@@ -325,8 +334,7 @@ def remove_label(request, label_id, issue_id):
 
     issue.labels.remove(label)
 
-    if label.issue.count() <= 0:
-        label.delete()
+    q = LableEvent.objects.create(user=request.user, time= datetime.datetime.now(), issue=issue, label=label, state="RE")
 
     return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
 
@@ -385,11 +393,27 @@ def profile(request, id=None):
             if i.user == request.user:              # if it is a logged in user it can neither be unfollowed nor followed
                 final_for_followers.append(False)
 
-    projects = ObservedProject.objects.filter(user=selected_user)
+    
+    if selected_user == request.user:
+        projects = ObservedProject.objects.filter(user=selected_user)
+    else:
+        project_colab = request.user.collaborators.all()
+        projects = ObservedProject.objects.filter(user=selected_user).exclude(Q(public=False) & ~Q(id__in=project_colab))
+
     update_possible = selected_user == request.user
     follow_possible = selected_user != request.user and selected_user.profile not in my_following and request.user.is_authenticated
     unfollow_possible =  selected_user != request.user and selected_user.profile in my_following and request.user.is_authenticated
-    context = {"selected_user": selected_user, 'projects' : projects, 'update_possible' : update_possible, "selected_user_following" : selected_user_following, "selected_user_followers" : selected_user_followers, "follow_possible": follow_possible, "unfollow_possible": unfollow_possible, "final_for_following": final_for_following, "final_for_followers": final_for_followers, "request_user" : request.user, }
+    context = {
+        'selected_user': selected_user,
+        'projects' : projects,
+        'update_possible' : update_possible,
+        'selected_user_following' : selected_user_following,
+        'selected_user_followers' : selected_user_followers,
+        'follow_possible': follow_possible,
+        'unfollow_possible': unfollow_possible,
+        'final_for_following': final_for_following,
+        'final_for_followers': final_for_followers
+    }
     return render(request, 'uks_app/profile.html', context)
 
 # user profile update

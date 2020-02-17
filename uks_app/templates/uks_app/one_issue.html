@@ -54,25 +54,28 @@
             {% with event|classname as modelclass %}
             <div class="card mb-2">
                 <div class="card-body">
+                    
                         {% if modelclass == "MilestoneChange" %} 
-                            <div class="row">       
-                                <i style="margin-right: 10px; margin-top: 8px; color: #17a2b8" class="fas fa-map-signs"></i>
-                                <p>{{event.checkpoint.title}}
+
+                            <div class="bd-highlight">
+                                <img style="margin-right: 5px; margin-bottom: 7px;" class="rounded " width="30" height="30" src="{{ event.user.profile.image.url }}">
+                                <span style="font-size: 1.25rem; color: #17a2b8" class="card-title"><a style="font-size: 1.25rem; color: #17a2b8" href="{% url 'profile' event.user.username %}">{{event.user}} </a></span>
                                 {% if event.add %}
-                                    <br>Milestone added!</p>
+                                    <span>added milestone </span>
                                 {% else %}
-                                    <br>Milestone removed!</p>
+                                    <span>removed milestone </span>
                                 {% endif %}
-                                <p class="ml-auto">User: {{event.user}}<br>Change date: {{event.time}}</p>
+                                <span>{{event.checkpoint.title}}</span>
+                                <span class="text-muted"> on {{event.time}} </span>
                             </div>
                             
                         {% elif modelclass == "Comment" %}
                             
                             <div class="d-flex bd-highlight border-bottom mb-2">
                             <div class="p-2 bd-highlight">
-                                          <img style="margin-right: 5px; margin-bottom: 7px;" class="rounded " width="30" height="30" src="{{ event.user.profile.image.url }}">
-                                    <span style="font-size: 1.25rem; color: #17a2b8" class="card-title"> {{event.user}} </span>
-                                    <span class="text-muted"> commented on {{event.time}} </span>
+                                <img style="margin-right: 5px; margin-bottom: 7px;" class="rounded " width="30" height="30" src="{{ event.user.profile.image.url }}">
+                                <span style="font-size: 1.25rem; color: #17a2b8" class="card-title"><a style="font-size: 1.25rem; color: #17a2b8" href="{% url 'profile' event.user.username %}">{{event.user}} </a></span>
+                                <span class="text-muted"> commented on {{event.time}} </span>
                             </div>
 
                                 <div class="ml-auto p-2 bd-highlight text-muted">
@@ -91,7 +94,6 @@
                                 {% for comment_change in event.commentchange_set.all %}
                                     {% if forloop.last %}
                                         <p>{{comment_change.newComment}}</p>
-                                    }
                                     {% endif %}
                                 {% endfor %}
                             {% else %}
@@ -142,6 +144,32 @@
                                 <span class="text-muted"> on {{event.time}} </span>
                             </div>
 
+                        {% elif modelclass == "LableEvent" %}
+                            <div class="bd-highlight">
+                                <img style="margin-right: 5px; margin-bottom: 7px;" class="rounded " width="30" height="30" src="{{ event.user.profile.image.url }}">
+                                <span style="font-size: 1.25rem; color: #17a2b8" class="card-title"><a style="font-size: 1.25rem; color: #17a2b8" href="{% url 'profile' event.user.username %}">{{event.user}} </a></span>
+                                {% if event.state == 'CR' %}
+                                    <span>added label &nbsp;</span>
+                                    <i style="margin-right: 10px; margin-top: 6px; color: {{event.label.color}}" class="fas fa-tag"></i>{{event.label.name}} 
+                                {% else %}    
+                                    <span>removed label &nbsp;</span>
+                                    <i style="margin-right: 10px; margin-top: 6px; color: {{event.label.color}}" class="fas fa-tag"></i>{{event.label.name}} 
+                                {% endif %}
+                                <span class="text-muted"> on {{event.time}} </span>
+                            </div>
+
+                        {% elif modelclass == "SubIssueEvent" %}
+                            <div class="bd-highlight">
+                                <img style="margin-right: 5px; margin-bottom: 7px;" class="rounded " width="30" height="30" src="{{ event.user.profile.image.url }}">
+                                <span style="font-size: 1.25rem; color: #17a2b8" class="card-title"><a style="font-size: 1.25rem; color: #17a2b8" href="{% url 'profile' event.user.username %}">{{event.user}} </a></span>
+                                {% if event.state == 'CR' %}
+                                    <span>added subissue {{event.subissue.title}}</span>
+                                {% else %}    
+                                    <span>removed subissue {{event.subissue.title}}</span>
+                                {% endif %}
+                                <span class="text-muted"> on {{event.time}} </span>
+                            </div>
+
 
                         {% endif %}
                         {% endwith %}
@@ -165,7 +193,7 @@
                         <a href="{% url 'assign_issue' issue.id %}"><i style="color:#17a2b8" class="fas fa-sync"></i></a></p>
                     </span>
                 {% endif %} 
-                <p style="font-size:x-small"><i style="margin-right: 10px; margin-top: 6px;" class="fas fa-user-secret"></i><a style="color: #17a2b8" href="{% url 'profile' issue.user.username %}">{{issue.user.username}}</a></p>       
+                <p style="font-size:x-small"><i style="margin-right: 10px; margin-top: 6px;" class="fas fa-user-secret"></i><a class="black-link" href="{% url 'profile' issue.user.username %}">{{issue.user.username}}</a></p>       
             </p>
         {% else %}
             <p>Assign
@@ -211,14 +239,16 @@
         {% endif %}
         {% if  issue.milestones.all %}
             <p style="font-size:x-small">
-                {% for milestone in issue.milestones.all %}
-                    <i style="margin-right: 10px; margin-top: 6px;" class="fas fa-check-circle"></i>{{milestone.title}} 
-                    {% if user == object.project.user or user in object.project.collaborators.all %}
-                        <a class="black-link" style="float: right;" href="{% url 'remove_milestone' issue.id milestone.id %}"><i style="margin-top: 6px;" class="fas fa-times"></i></a>
-                    {% endif %}
-                    </br>
-                {% endfor %}            
-            </p>
+                    {% for milestone in issue.milestones.all %}
+                    <i class="fas fa-check-circle"></i>
+                    <a class="black-link" href="{% url 'one_milestone' object.project.id  milestone.id%}">&nbsp; &nbsp;{{milestone.title}}</a>
+                        {% if user == object.project.user or user in object.project.collaborators.all %}
+                            <a class="black-link" style="float: right;" href="{% url 'remove_milestone' issue.id milestone.id %}"><i style="margin-top: 6px;" class="fas fa-times"></i></a>
+                        {% endif %}
+                        </br>
+                    {% endfor %}            
+                </p>
+
         {% else %}
             <p style="font-size:x-small">There are currently no milestones.</p>
         {% endif %}
