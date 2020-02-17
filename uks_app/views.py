@@ -357,11 +357,27 @@ def profile(request, id=None):
             if i.user == request.user:              # if it is a logged in user it can neither be unfollowed nor followed
                 final_for_followers.append(False)
 
-    projects = ObservedProject.objects.filter(user=selected_user)
+    
+    if selected_user == request.user:
+        projects = ObservedProject.objects.filter(user=selected_user)
+    else:
+        project_colab = request.user.collaborators.all()
+        projects = ObservedProject.objects.filter(user=selected_user).exclude(Q(public=False) & ~Q(id__in=project_colab))
+
     update_possible = selected_user == request.user
     follow_possible = selected_user != request.user and selected_user.profile not in my_following and request.user.is_authenticated
     unfollow_possible =  selected_user != request.user and selected_user.profile in my_following and request.user.is_authenticated
-    context = {"selected_user": selected_user, 'projects' : projects, 'update_possible' : update_possible, "selected_user_following" : selected_user_following, "selected_user_followers" : selected_user_followers, "follow_possible": follow_possible, "unfollow_possible": unfollow_possible, "final_for_following": final_for_following, "final_for_followers": final_for_followers, "request_user" : request.user, }
+    context = {
+        'selected_user': selected_user,
+        'projects' : projects,
+        'update_possible' : update_possible,
+        'selected_user_following' : selected_user_following,
+        'selected_user_followers' : selected_user_followers,
+        'follow_possible': follow_possible,
+        'unfollow_possible': unfollow_possible,
+        'final_for_following': final_for_following,
+        'final_for_followers': final_for_followers
+    }
     return render(request, 'uks_app/profile.html', context)
 
 # user profile update
