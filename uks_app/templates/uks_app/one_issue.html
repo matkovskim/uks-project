@@ -128,6 +128,15 @@
                                 {% endif %}
                             </div>
 
+                        {% elif modelclass == "AssignIssueEvent" %}
+                            <div class="bd-highlight">
+                                <img style="margin-right: 5px; margin-bottom: 7px;" class="rounded " width="30" height="30" src="{{ event.user.profile.image.url }}">
+                                <span style="font-size: 1.25rem; color: #17a2b8" class="card-title"><a style="font-size: 1.25rem; color: #17a2b8" href="{% url 'profile' event.user.username %}">{{event.user}} </a></span>
+                                <span>assigned this issue to </span>
+                                <span style="font-size: 1.25rem; color: #17a2b8" class="card-title"><a style="font-size: 1.25rem; color: #17a2b8" href="{% url 'profile' event.assigned_user.username %}">{{event.assigned_user}} </a></span>
+                                <span class="text-muted"> on {{event.time}} </span>
+                            </div>
+
 
                         {% endif %}
                         {% endwith %}
@@ -144,9 +153,27 @@
     
     <!-- side part -->
     <div class="col-3">
-        <p>Assignee</p>
-        <p style="font-size:x-small"><i style="margin-right: 10px; margin-top: 6px;" class="fas fa-user-secret"></i>Vesna Milic</p>
-        
+        {% if issue.user %}
+            <p>Assigned
+                {% if user == object.project.user or user in object.project.collaborators.all %}
+                    <span style="float: right;"> 
+                        <a href="{% url 'assign_issue' issue.id %}"><i style="color:#17a2b8" class="fas fa-sync"></i></a></p>
+                    </span>
+                {% endif %} 
+                <p style="font-size:x-small"><i style="margin-right: 10px; margin-top: 6px;" class="fas fa-user-secret"></i><a style="color: #17a2b8" href="{% url 'profile' issue.user.username %}">{{issue.user.username}}</a></p>       
+            </p>
+        {% else %}
+            <p>Assign
+                {% if user == object.project.user or user in object.project.collaborators.all %}
+                    <span style="float: right;"> 
+                        <a href="{% url 'assign_issue' issue.id %}"><i style="color:#17a2b8" class="fas fa-plus"></i></a></p>
+                    </span>
+                {% else %}
+                    <p style="font-size:x-small">No assigned yet.</p>
+                {% endif %}  
+            </p>
+        {% endif %}
+
         <hr>
 
         <p>Labels

@@ -26,6 +26,7 @@ class Issue(models.Model):
     project = models.ForeignKey(to=ObservedProject, null=False, on_delete=models.CASCADE)
     description = models.TextField(max_length=200, blank=True)
     parent_issue = models.ForeignKey('self', null=True, related_name='subissues', on_delete=models.CASCADE)
+    user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE)
     state = models.CharField(
         max_length=2,
         choices=PROBLEM_STATE,
@@ -96,6 +97,9 @@ class IssueChange(Event):
         choices=PROBLEM_STATE,
         default=OPEN,
     )
+
+class AssignIssueEvent(Event):
+    assigned_user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE)
 
 class MilestoneChange(Event):
     add = models.BooleanField()

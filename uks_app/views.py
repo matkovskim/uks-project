@@ -4,8 +4,8 @@ from django.views import generic
 from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 
-from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange, CodeChangeEvent, IssueChange
-from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm, CommentForm, ChooseSubissueForm
+from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange, CodeChangeEvent, AssignIssueEvent, IssueChange
+from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm, CommentForm, ChooseSubissueForm, AssignIssueForm
 import logging
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -250,6 +250,37 @@ def change_issue_state(request, project_id, issue_id):
     observed_issue.save()
 
     return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
+
+# assign issue
+@login_required
+def assign_issue(request, issue_id):
+
+    #get issue and project
+    observed_issue = get_object_or_404(Issue, pk=issue_id)
+    observed_project = observed_issue.project
+    
+    # only project owner and collaborators can assign a issue
+    if request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
+        return HttpResponse('Unauthorized', status=401)
+    
+    form = AssignIssueForm(observed_issue, data=request.POST or None)
+
+    if form.is_valid():
+        
+        chosen_user = form.cleaned_data['user'].first()
+        observed_issue.user=chosen_user
+        observed_issue.save()
+
+        assign_issue_event = AssignIssueEvent.objects.create(assigned_user=chosen_user, issue=observed_issue, time=datetime.datetime.now(), user=request.user)
+
+        return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
+
+    context = {
+        'form' : form,
+        'issue' : observed_issue
+    }
+
+    return render(request, 'uks_app/assign_issue.html', context)
 
 @login_required
 def remove_label(request, label_id, issue_id):
