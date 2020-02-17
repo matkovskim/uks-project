@@ -53,7 +53,7 @@ def create_update_project(request, project_id=None):
         if project_id:
             return HttpResponseRedirect('/project/' + str(project_id) + '/')  
         else:
-            return HttpResponseRedirect('/project/')
+            return HttpResponseRedirect('/project/' + str(project.id) + '/') 
 
     context = {
         'form' : form,
@@ -92,6 +92,10 @@ def create_update_issue(request, project_id, issue_id=None):
         issue.project = observed_project
         issue.save()
         
+        if issue_id == None and issue.parent_issue != None :
+            SubIssueEvent.objects.create(user=request.user, time= datetime.datetime.now(), issue=issue.parent_issue, state="CR", subissue=issue)
+
+
         if issue_id:
             return HttpResponseRedirect('/issue/' + str(issue_id) + '/')  
         else:
@@ -394,10 +398,10 @@ def profile(request, id=None):
                 final_for_followers.append(False)
 
     
+    project_colab = request.user.collaborators.all()
     if selected_user == request.user:
         projects = ObservedProject.objects.filter(user=selected_user)
     else:
-        project_colab = request.user.collaborators.all()
         projects = ObservedProject.objects.filter(user=selected_user).exclude(Q(public=False) & ~Q(id__in=project_colab))
 
     update_possible = selected_user == request.user
@@ -412,7 +416,8 @@ def profile(request, id=None):
         'follow_possible': follow_possible,
         'unfollow_possible': unfollow_possible,
         'final_for_following': final_for_following,
-        'final_for_followers': final_for_followers
+        'final_for_followers': final_for_followers,
+        'project_colab' : project_colab
     }
     return render(request, 'uks_app/profile.html', context)
 
@@ -550,7 +555,7 @@ class OneProjectView(generic.DetailView):
         entity = get_object_or_404(ObservedProject, pk=kwargs['pk'])
         user = request.user
 
-        if user != entity.user and not entity.collaborators.filter(id = user.id).exists():
+        if not entity.public and user != entity.user and not entity.collaborators.filter(id = user.id).exists():
             return HttpResponse('Unauthorized', status=401)
         return super(OneProjectView, self).dispatch(request, *args, **kwargs)
 
@@ -569,7 +574,7 @@ class OneIssueView(generic.DetailView):
         entity = get_object_or_404(Issue, pk=kwargs['pk'])
         user = request.user
 
-        if user != entity.project.user and not entity.project.collaborators.filter(id = user.id).exists():
+        if not entity.project.public and user != entity.project.user and not entity.project.collaborators.filter(id = user.id).exists():
             return HttpResponse('Unauthorized', status=401)
         return super(OneIssueView, self).dispatch(request, *args, **kwargs)
 
@@ -582,7 +587,7 @@ class OneMilestoneView(generic.DetailView):
         entity = get_object_or_404(Milestone, pk=kwargs['pk'])
         user = request.user
 
-        if user != entity.project.user and not entity.project.collaborators.filter(id = user.id).exists():
+        if not entity.project.public and user != entity.project.user and not entity.project.collaborators.filter(id = user.id).exists():
             return HttpResponse('Unauthorized', status=401)
         return super(OneMilestoneView, self).dispatch(request, *args, **kwargs)
 
@@ -769,7 +774,7 @@ class OneCommentView(generic.DetailView):
         entity = get_object_or_404(Comment, pk=kwargs['pk'])
         user = request.user
 
-        if user != entity.issue.project.user and not entity.issue.project.collaborators.filter(id = user.id).exists():
+        if not entity.issue.project.public and user != entity.issue.project.user and not entity.issue.project.collaborators.filter(id = user.id).exists():
             return HttpResponse('Unauthorized', status=401)
         return super(OneCommentView, self).dispatch(request, *args, **kwargs)
 

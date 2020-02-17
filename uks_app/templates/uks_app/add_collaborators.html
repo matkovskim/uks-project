@@ -23,7 +23,7 @@
                                 <img class="img-thumbnail account-img" height="60" width="60" src="{{ user.profile.image.url }}">
                             </div>
                             <div class="media-body">
-                                <h5 class="card-title mb-0"><a href="{% url 'profile' user.username %}"> &nbsp; {{user.username}}</a></h5>
+                                <h5 class="card-title mb-0 ml-3"><a class="blue-link" href="{% url 'profile' user.username %}"> {{user.username}}</a></h5>
                                 <small class="text-secondary ml-1">&nbsp; {{user.first_name}} {{user.last_name}}</small>
                             </div>
                             <div>

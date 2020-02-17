@@ -72,12 +72,12 @@ function setChart(){
 
 <h4 class="mb-3">
     {% if not object.public %}
-    <i class="fas fa-lock text-secondary mt-1" style="size:2x;"></i> {{object.user.username}}/{{object.name}}
+    <i class="fas fa-lock text-secondary mt-1" style="size:2x;"></i> <a class="ml-1 black-link" href="{% url 'profile' object.user.username %}"> {{object.user.username}}</a>/{{object.name}}
     <span class="something">
     Private
     </span>
     {% else %}
-    {{object.user.username}}/{{object.name}}
+    <a class="black-link" href="{% url 'profile' object.user.username %}"> {{object.user.username}}</a>/{{object.name}}
     {% endif %}
     {% if user == object.user %}
     <span style="float: right;">
@@ -190,11 +190,11 @@ function setChart(){
     </div>
     <div class="tab-pane fade" id="milestone" role="tabpanel" aria-labelledby="milestone-tab">
         <div style="margin-top: 20px">
-            <span>
+            <div style="margin-right: 6px" class="row justify-content-end">
                 {% if user == object.user or user in object.collaborators.all %}
                 <a href="{% url 'new_milestone' object.id %}" class="btn btn-info"><i style="margin-right: 10px" class="fas fa-plus-circle"></i>New milestone</a>
                 {% endif %}
-            </span>
+            </div>
             <div class="mt-3">
                 <div style="margin-top: 20px">
                     {% if object.milestone_set.all %}
@@ -244,8 +244,8 @@ function setChart(){
                                         <img class="img-thumbnail account-img" height="60" width="60" src="{{ collaborator.profile.image.url }}">
                                     </div>
                                     <div class="media-body">
-                                        <h5 class="card-title mb-0"><a href="{% url 'profile' collaborator.username %}"> &nbsp; {{collaborator.username}}</a></h5>
-                                        <small class="text-secondary ml-1">&nbsp; {{collaborator.first_name}} {{collaborator.last_name}}</small>
+                                        <h5 class="card-title mb-0 ml-3"><a class="blue-link" href="{% url 'profile' collaborator.username %}">{{collaborator.username}}</a></h5>
+                                        <small class="text-secondary ml-3">{{collaborator.first_name}} {{collaborator.last_name}}</small>
                                     </div>
                                     {% if user == object.user%}
                                     <div>

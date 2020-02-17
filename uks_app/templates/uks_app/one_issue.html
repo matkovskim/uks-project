@@ -13,7 +13,7 @@
 </h4>
 
 <h6 class="mb-4">{{object.description}}
-    {% if user == object.user or user in object.collaborators.all %}
+    {% if user == object.project.user or user in object.project.collaborators.all %}
         <span style="float: right;">
             {% if object.state == "OP" %}
                 <a href="{% url 'change_state_issue' object.project.id object.id %}" class="btn btn-secondary" data-toggle="tooltip" data-placement="bottom" title="Close issue"><i class="fas fa-times-circle"></i></a>

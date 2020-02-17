@@ -6,15 +6,15 @@
 
 {% block content %}
 <div class="row">
-  <div class="col-md-4">
+  <div class="col-md-3">
     <div class="media mb-4">
       <img class="img-thumbnail account-img" src="{{ selected_user.profile.image.url }}">
     </div>
     <div class="mb-4 media-body">
-      <h2 class="account-heading">{{ selected_user.username }}
+      <h4 class="account-heading">{{ selected_user.username }} </h4>
       <p class="text-secondary">{{ selected_user.email }}</p>
       {% if update_possible %}
-        <a class="btn btn-md btn-dark" href="{% url 'profile_update' selected_user.username %}">Update Profile</a>
+        <a class="btn btn-md btn-block btn-dark" href="{% url 'profile_update' selected_user.username %}">Update Profile</a>
       {% endif %}
       {% if follow_possible %}
         <a id="{{selected_user.username}}" class="btn btn-info btn-block follow text-white"> Follow </a></h2>
@@ -24,11 +24,16 @@
       {% endif %}
     </div>
   </div>
-  <div class="col-md-8">
+  <div class="col-md-9">
     <ul class="nav nav-tabs" id="myTab" role="tablist">
       <li class="nav-item">
           <a class="nav-link tab-link active" id="code-tab" data-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="true"><i style="margin-right:6px" class="fas fa-project-diagram"></i></i>Projects ({{projects|length}}) </a>
       </li>
+      {% if user == selected_user%}
+      <li class="nav-item">
+          <a class="nav-link tab-link" id="collaborator-tab" data-toggle="tab" href="#collaborator" role="tab" aria-controls="collaborator" aria-selected="false"><i style="margin-right:6px" class="fas fa-project-diagram"></i>Collaborations ({{project_colab|length}}) </a>
+      </li>
+      {% endif%}
       <li class="nav-item">
           <a class="nav-link tab-link" id="issue-tab" data-toggle="tab" href="#followers" role="tab" aria-controls="followers" aria-selected="false"><i style="margin-right:6px" class="fas fa-users"></i>Followers ({{selected_user_followers|length}})</a>
       </li>
@@ -70,6 +75,35 @@
               </div>
           </div>
       </div>
+      {% if user == selected_user %}
+      <div class="tab-pane fade" id="collaborator" role="tabpanel" aria-labelledby="collaborator-tab">
+          <div>
+              <div style="margin-top: 20px">
+                {% if project_colab %}
+                <div class="row backg" style="margin-top: 50px;">
+                    <!-- list of all projects -->
+                    {% for project in project_colab %}
+                        <div class="col-lg-6" style="margin-bottom: 10px;">
+                            <div class="card text-center">
+                                <div class="card-header">
+                                    <h5><a class="blue-link" href="{% url 'one_project' project.id %}">{{project.name}}</a></h5>
+                                    <h6>{{project.git_repo}}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">{{project.description}}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>There are no projects available.</p>
+            {% endif %}
+              </div>
+          </div>
+      </div>
+      {% endif %}
+
     <!-- followers tab -->
       <div class="tab-pane fade" id="followers" role="tabpanel" aria-labelledby="issue-tab">
           <div style="margin-top: 20px">
