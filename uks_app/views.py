@@ -499,6 +499,14 @@ class OneProjectView(generic.DetailView):
     model = ObservedProject
     template_name = 'uks_app/one_project.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        entity = get_object_or_404(ObservedProject, pk=kwargs['pk'])
+        user = request.user
+
+        if user != entity.user and not entity.collaborators.filter(id = user.id).exists():
+            return HttpResponse('Unauthorized', status=401)
+        return super(OneProjectView, self).dispatch(request, *args, **kwargs)
+
 # one issue detailed view
 class OneIssueView(generic.DetailView):
     model = Issue
@@ -509,11 +517,27 @@ class OneIssueView(generic.DetailView):
         context['events'] = Event.objects.filter(issue_id=self.kwargs.get('pk')).order_by('time')
 
         return context
+    
+    def dispatch(self, request, *args, **kwargs):
+        entity = get_object_or_404(Issue, pk=kwargs['pk'])
+        user = request.user
+
+        if user != entity.project.user and not entity.project.collaborators.filter(id = user.id).exists():
+            return HttpResponse('Unauthorized', status=401)
+        return super(OneIssueView, self).dispatch(request, *args, **kwargs)
 
 # one milestone detailed view
 class OneMilestoneView(generic.DetailView):
     model = Milestone
     template_name = 'uks_app/one_milestone.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        entity = get_object_or_404(Milestone, pk=kwargs['pk'])
+        user = request.user
+
+        if user != entity.project.user and not entity.project.collaborators.filter(id = user.id).exists():
+            return HttpResponse('Unauthorized', status=401)
+        return super(OneMilestoneView, self).dispatch(request, *args, **kwargs)
 
 #delete milestone
 class MilestoneDelete(DeleteView):
@@ -680,6 +704,14 @@ def comment_delete_view(request, issue_id, comment_id):
 class OneCommentView(generic.DetailView):
     model = Comment
     template_name = 'uks_app/one_comment.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        entity = get_object_or_404(Comment, pk=kwargs['pk'])
+        user = request.user
+
+        if user != entity.issue.project.user and not entity.issue.project.collaborators.filter(id = user.id).exists():
+            return HttpResponse('Unauthorized', status=401)
+        return super(OneCommentView, self).dispatch(request, *args, **kwargs)
 
 class ChartData(APIView):
     authentication_classes = []
