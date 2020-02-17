@@ -22,6 +22,7 @@ urlpatterns = [
     path('issue/<int:pk>/delete/', views.IssueDelete.as_view(), name='delete_issue'),
     path('project/<int:project_id>/issue/<int:issue_id>/edit/', views.create_update_issue, name='edit_issue'),
     path('project/<int:project_id>/issue/<int:issue_id>/changestate/', views.change_issue_state, name='change_state_issue'),
+    path('issue/<int:issue_id>/issue/choose', views.assign_issue, name='assign_issue'),
 
     #subissues
     path('issue/<int:issue_id>/subissue/choose', views.choose_subissue, name='choose_subissue'),
@@ -75,6 +76,7 @@ urlpatterns = [
     # followers 
     path('api/user/follow', views.follow),
     path('api/user/unfollow', views.unfollow),
+
 ]
 
 if settings.DEBUG:

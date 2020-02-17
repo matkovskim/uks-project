@@ -142,3 +142,24 @@ class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = Profile
         fields = ['image']
+
+
+class AssignIssueForm(forms.Form): 
+
+    def __init__(self, observed_issue, *args, **kwargs):
+        super(AssignIssueForm, self).__init__(*args, **kwargs)
+
+        users=[]
+        for user in observed_issue.project.collaborators.all():
+            users.append(user)
+
+        users.append(observed_issue.project.user)
+    
+        if (observed_issue.user!=None):
+            users.remove(observed_issue.user)
+
+        user_query=User.objects.filter(id__in=[o.id for o in users])
+        self.fields['user'] = forms.ModelMultipleChoiceField(queryset=user_query)
+
+    def save(self, commit=True):
+        print(self.fields['user'])
