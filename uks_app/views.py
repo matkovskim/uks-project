@@ -4,7 +4,7 @@ from django.views import generic
 from django.urls import reverse_lazy
 from django.views.generic.edit import DeleteView
 
-from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange, CodeChangeEvent, AssignIssueEvent, IssueChange
+from .models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange, CodeChangeEvent, AssignIssueEvent, IssueChange, LableEvent, SubIssueEvent
 from .forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm, CommentForm, ChooseSubissueForm, AssignIssueForm
 import logging
 from django.contrib import messages
@@ -118,6 +118,8 @@ def create_label(request, issue_id):
         #set issue as foreign key
         label.issue.add(observed_issue)
         label.save()
+
+        q = LableEvent.objects.create(user=request.user, time= datetime.datetime.now(), issue=observed_issue, label=label, state="CR")
         
         return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
 
@@ -149,6 +151,7 @@ def choose_label(request, issue_id):
         for label in chosen_labels:
             label.issue.add(observed_issue)
             label.save()
+            q = LableEvent.objects.create(user=request.user, time= datetime.datetime.now(), issue=observed_issue, label=label, state="CR")
         
         return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
 
@@ -176,6 +179,8 @@ def choose_subissue(request, issue_id):
                 issue.parent_issue = observed_issue
 
                 issue.save()
+                
+                q = SubIssueEvent.objects.create(user=request.user, time= datetime.datetime.now(), issue=observed_issue, state="CR", subissue=issue)
         
         return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
 
@@ -196,6 +201,8 @@ def remove_subissue(request, issue_id, subissue_id):
     subissue = get_object_or_404(Issue, id=subissue_id)
 
     issue.subissues.remove(subissue)
+
+    q = SubIssueEvent.objects.create(user=request.user, time= datetime.datetime.now(), issue=issue, state="RE", subissue=subissue)
 
     return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
 
@@ -297,8 +304,7 @@ def remove_label(request, label_id, issue_id):
 
     issue.labels.remove(label)
 
-    if label.issue.count() <= 0:
-        label.delete()
+    q = LableEvent.objects.create(user=request.user, time= datetime.datetime.now(), issue=issue, label=label, state="RE")
 
     return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
 

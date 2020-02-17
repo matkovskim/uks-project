@@ -10,6 +10,13 @@ PROBLEM_STATE = (
     (CLOSED, 'Closed')
 )
 
+CREATED='CR'
+REMOVED='RE'
+EVENT_STATE = (
+    (CREATED, 'Created'),
+    (REMOVED, 'Removed')
+)
+
 class ObservedProject(models.Model):
     user = models.ForeignKey(to=User, null=False, on_delete=models.CASCADE)
     name = models.CharField(max_length=200, blank=False)
@@ -45,7 +52,6 @@ class Label(models.Model):
     def __str__(self):
         return self.name
 
-
 class Milestone(models.Model):
     title = models.CharField(max_length=200, blank=False)
     date = models.DateTimeField()
@@ -60,6 +66,14 @@ class Event(PolymorphicModel):
     time = models.DateTimeField()
     user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE)
     issue = models.ForeignKey(to=Issue, null=False, on_delete=models.CASCADE)
+
+
+class LableEvent(Event):
+    label = models.ForeignKey(to=Label, null=True, on_delete=models.CASCADE)
+    state = models.CharField(
+        max_length=2,
+        choices=EVENT_STATE
+    )
 
 class Comment(Event):
     description = models.CharField(max_length=200, blank=False)
@@ -100,6 +114,13 @@ class IssueChange(Event):
 
 class AssignIssueEvent(Event):
     assigned_user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE)
+
+class SubIssueEvent(Event):
+    subissue = models.ForeignKey(to=Issue, null=False, on_delete=models.CASCADE)
+    state = models.CharField(
+        max_length=2,
+        choices=EVENT_STATE
+    )
 
 class MilestoneChange(Event):
     add = models.BooleanField()
