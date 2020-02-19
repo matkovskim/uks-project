@@ -71,3 +71,232 @@ class TestMilestoneViews(TestCase):
         response = self.client.get(one_milestone_url)
         self.assertEquals(response.status_code, 200)
         self.assertTemplateUsed(response, 'uks_app/one_milestone.html')
+
+class TestProjectViews(TestCase):
+
+    def setUp(self):
+        self.client = Client()
+
+        self.us = User.objects.create_user('majak', 'majak@uks.com', 'pass')
+        self.us.save()
+
+        self.johnus = User.objects.create_user('john', 'john@uks.com', 'johnpass')
+        self.johnus.save()
+
+    def test_project_list_GET(self):
+
+        response = self.client.get(reverse('all_projects'))
+
+        self.assertEquals(response.status_code, 200)
+        self.assertTemplateUsed(response, 'uks_app/all_projects.html')
+
+    def test_project_public_GET(self):
+
+        ObservedProject.objects.create(
+            name='project',
+            git_repo='git_repo',
+            description='description',
+            public = True,
+            id = 1,
+            user = self.us
+        )
+        
+        response = self.client.get(reverse('one_project', args=['1']))
+
+        self.assertEquals(response.status_code, 200)
+        self.assertTemplateUsed(response, 'uks_app/one_project.html')
+
+    def test_project_private_GET_unauthorized(self):
+
+        ObservedProject.objects.create(
+            name='project',
+            git_repo='git_repo',
+            description='description',
+            public = False,
+            id = 1,
+            user = self.us
+        )
+        
+        response = self.client.get(reverse('one_project', args=['1']))
+
+        self.assertEquals(response.status_code, 401)
+
+    def test_project_private_GET_authorized(self):
+
+        self.client.login(username='majak', password='pass')
+
+        ObservedProject.objects.create(
+            name='project',
+            git_repo='git_repo',
+            description='description',
+            public = False,
+            id = 1,
+            user = self.us
+        )
+        
+        response = self.client.get(reverse('one_project', args=['1']))
+
+        self.assertEquals(response.status_code, 200)
+        self.assertTemplateUsed(response, 'uks_app/one_project.html')
+        
+    def test_project_create_POST_authorized(self):
+
+        self.client.login(username='majak', password='pass')
+    
+        response = self.client.post(reverse('new_project'), 
+        {
+            'name' : 'project1',
+            'git_repo' : 'git_repo',
+            'description' : 'description',
+            'public' : True          
+        })
+
+        self.assertEquals(response.status_code, 302)
+        project = ObservedProject.objects.first()
+        self.assertEquals(project.name, 'project1')
+        self.assertEquals(project.git_repo, 'git_repo')
+        self.assertEquals(project.description, 'description')
+        self.assertEquals(project.user, self.us)
+        self.assertEquals(project.public, True)
+
+    def test_project_create_POST_unauthorized(self):
+    
+        response = self.client.post(reverse('new_project'), 
+        {
+            'name' : 'project1',
+            'git_repo' : 'git_repo',
+            'description' : 'description',
+            'public' : True          
+        })
+
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(ObservedProject.objects.count(), 0)
+
+    def test_project_create_POST_no_data(self):
+
+        self.client.login(username='majak', password='pass')
+
+        response = self.client.post(reverse('new_project'))
+
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(ObservedProject.objects.count(), 0)
+
+    def test_project_DELETE_unauthorized(self):
+
+        ObservedProject.objects.create(
+            name='project',
+            git_repo='git_repo',
+            description='description',
+            public = True,
+            id = 1,
+            user = self.us
+        )
+
+        response = self.client.delete(reverse('delete_project', kwargs={'pk': 1}))
+
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(ObservedProject.objects.count(), 1)
+
+    def test_project_DELETE_not_owner(self):
+
+        self.client.login(username='john', password='johnpass')
+
+        ObservedProject.objects.create(
+            name='project',
+            git_repo='git_repo',
+            description='description',
+            public = True,
+            id = 1,
+            user = self.us
+        )
+
+        response = self.client.delete(reverse('delete_project', kwargs={'pk': 1}))
+
+        self.assertEquals(response.status_code, 401)
+        self.assertEquals(ObservedProject.objects.count(), 1)
+
+    def test_project_DELETE_owner(self):
+
+        self.client.login(username='majak', password='pass')
+
+        ObservedProject.objects.create(
+            name='project',
+            git_repo='git_repo',
+            description='description',
+            public = True,
+            id = 1,
+            user = self.us
+        )
+
+        response = self.client.delete(reverse('delete_project', kwargs={'pk': 1}))
+
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(ObservedProject.objects.count(), 0)
+
+    def test_project_UPDATE_owner(self):
+        self.client.login(username='majak', password='pass')
+
+        proj = ObservedProject.objects.create(
+            name='project',
+            git_repo='git_repo',
+            description='description',
+            public = True,
+            user = self.us
+        )
+   
+        response = self.client.post(reverse('edit_project', args=[proj.id]), { 
+            'name' : 'project_new',
+            'git_repo' :'git_new',
+            'description' : 'description_new',
+            'public' : True,
+        })
+        
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(ObservedProject.objects.first().name, 'project_new')
+        self.assertEquals(ObservedProject.objects.first().git_repo, 'git_new')
+        self.assertEquals(ObservedProject.objects.first().description, 'description_new')
+
+    def test_project_UPDATE_not_owner(self):
+        self.client.login(username='john', password='johnpass')
+
+        proj = ObservedProject.objects.create(
+            name='project',
+            git_repo='git_repo',
+            description='description',
+            public = True,
+            user = self.us
+        )
+   
+        response = self.client.post(reverse('edit_project', args=[proj.id]), { 
+            'name' : 'project_new',
+            'git_repo' :'git_new',
+            'description' : 'description_new',
+            'public' : True,
+        })
+        
+        self.assertEquals(response.status_code, 401)
+        self.assertEquals(ObservedProject.objects.first().name, 'project')
+        self.assertEquals(ObservedProject.objects.first().git_repo, 'git_repo')
+        self.assertEquals(ObservedProject.objects.first().description, 'description')
+
+    def test_project_UPDATE_unauthorized(self):
+
+        proj = ObservedProject.objects.create(
+            name='project',
+            git_repo='git_repo',
+            description='description',
+            public = True,
+            user = self.us
+        )
+   
+        response = self.client.post(reverse('edit_project', args=[proj.id]), { 
+            'name' : 'project_new',
+            'git_repo' :'git_new',
+            'description' : 'description_new',
+            'public' : True,
+        })
+
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(ObservedProject.objects.first().name, 'project')
+        self.assertEquals(ObservedProject.objects.first().git_repo, 'git_repo')
+        self.assertEquals(ObservedProject.objects.first().description, 'description')
