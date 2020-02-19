@@ -729,7 +729,7 @@ def create_update_comment(request, issue_id, comment_id=None):
     if form.is_valid():
 
         if comment_id:
-            if (user == observed_comment.user):
+            if (user == observed_comment.user and observed_comment.issue.id == issue_id):
                 comment = form.save(commit=False)
                 commentChange = CommentChange(comment = comment, newComment=comment.description, time = datetime.datetime.now())
                 commentChange.save()
@@ -759,7 +759,7 @@ def comment_delete_view(request, issue_id, comment_id):
     observed_issue = get_object_or_404(Issue, id=issue_id)  #get issue
     user = request.user
     observed_comment = get_object_or_404(Comment, id=comment_id)
-    if (user == observed_comment.user):           
+    if (user == observed_comment.user and observed_issue == observed_comment.issue):           
         observed_comment.delete()
     else:
         return HttpResponse('Unauthorized', status=401)
