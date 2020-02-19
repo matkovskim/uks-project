@@ -1,5 +1,5 @@
 from django.test import SimpleTestCase
-from uks_app.forms import MilestoneForm
+from uks_app.forms import MilestoneForm, LabelForm
 
 class TestMilestoneForms(SimpleTestCase):
 
@@ -16,3 +16,19 @@ class TestMilestoneForms(SimpleTestCase):
         form = MilestoneForm(data={})
         self.assertFalse(form.is_valid())
         self.assertEquals(len(form.errors), 2)
+
+class TestLabelForms(SimpleTestCase):
+    
+    def test_create_label_form_valid_data(self):
+        form = LabelForm(data = {
+            'name' : 'Labela test',
+            'color' : '#eb34e8'
+        })
+
+        self.assertTrue(form.is_valid())
+
+    def test_create_label_form_no_data(self):
+        form = LabelForm(data = {})
+
+        self.assertFalse(form.is_valid())
+        self.assertEquals(len(form.errors),2)

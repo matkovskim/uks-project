@@ -1,6 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
-from uks_app.models import Comment, Issue, User, ObservedProject, CommentChange, Milestone
+from uks_app.models import Comment, Issue, User, ObservedProject, CommentChange, Milestone, Label
+from django.contrib.auth.models import User
 from django.utils import timezone 
 
 class TestMilestoneViews(TestCase):
@@ -71,3 +72,125 @@ class TestMilestoneViews(TestCase):
         response = self.client.get(one_milestone_url)
         self.assertEquals(response.status_code, 200)
         self.assertTemplateUsed(response, 'uks_app/one_milestone.html')
+
+class TestLabelViews(TestCase):
+    
+    def setUp(self):
+        self.client = Client()
+
+        self.us = User.objects.create_user('vesnamilic', 'vesna@uks.com', 'pass')
+        self.us.save()
+
+        self.us2 = User.objects.create_user('user2', 'user2@uks.com', 'pass')
+        self.us2.save()
+
+        self.client.login(username='vesnamilic', password='pass')
+
+        self.project = ObservedProject.objects.create(
+            name = 'TestProject',
+            git_repo = 'github',
+            description = 'description',
+            public = False,
+            user = self.us
+        )
+
+        self.project.save()
+
+        self.issue = Issue.objects.create(
+            title = 'Issue 1',
+            description = 'Opis',
+            project = self.project,
+            create_time = timezone.now()
+        )
+
+        self.issue.save()
+
+        self.issue2 = Issue.objects.create(
+            title = 'Issue 2',
+            description = 'Opis',
+            project = self.project,
+            create_time = timezone.now()
+        )
+
+        self.issue2.save()
+
+        self.label = Label.objects.create(
+            name = 'Label 1',
+            color = '#fffff'
+        )
+
+        self.label.save()
+        self.label.issue.add(self.issue)
+
+        self.create_label_url = reverse('new_label', args=[self.issue2.id])
+        self.remove_label_url = reverse('remove_label', args=[self.issue.id,self.label.id])
+
+
+    def test_create_label_GET(self):
+        response = self.client.get(self.create_label_url)
+        self.assertEquals(response.status_code, 200)
+        self.assertTemplateUsed(response, 'uks_app/create_label.html')
+
+    
+    def test_create_label_POST(self):
+        response = self.client.post(self.create_label_url, {
+            'name' : 'Label create',
+            'color' : '#4287f5'
+        })
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(self.issue2.labels.first().name, 'Label create')
+
+
+    def test_create_label_POST_invalid(self):
+        response = self.client.post(self.create_label_url, {
+            'color' : '#4287f5'
+        })
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(self.issue2.labels.count(), 0)
+
+    def test_create_label_POST_unauthorized(self):
+        self.client.login(username='user2', password='pass')
+        response = self.client.post(self.create_label_url, {
+            'name' : 'Label create',
+            'color' : '#4287f5'
+        })
+
+        self.assertEquals(response.status_code, 401)
+        self.assertEquals(self.issue2.labels.count(), 0)
+
+    def test_create_label_POST_login_required(self):
+        self.client.logout()
+
+        response = self.client.post(self.create_label_url, {
+            'name' : 'Label create',
+            'color' : '#4287f5'
+        })
+
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(self.issue2.labels.count(), 0)
+
+    def test_remove_label_POST(self):
+        response = self.client.post(self.remove_label_url)
+        print(self.issue.labels)
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(self.issue.labels.count(), 0)
+
+    def test_remove_label_404(self):
+        response = self.client.post(reverse('remove_label', args=[self.issue.id,100]))
+        self.assertEquals(response.status_code, 404)
+
+
+    def test_remove_label_POST_login_required(self):
+        self.client.logout()
+
+        response = self.client.post(self.remove_label_url)
+
+        self.assertEquals(response.status_code, 302)
+        self.assertEquals(self.issue.labels.count(), 1)
+
+    def test_remove_label_POST_login_unauthorized(self):
+        self.client.login(username='user2', password='pass')
+        response = self.client.post(self.remove_label_url)
+
+        self.assertEquals(response.status_code, 401)
+        self.assertEquals(self.issue.labels.count(), 1)

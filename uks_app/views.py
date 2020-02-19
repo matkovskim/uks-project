@@ -326,19 +326,19 @@ def assign_issue(request, issue_id):
 @login_required
 def remove_label(request, label_id, issue_id):
 
-    #get issue
+    # get issue
     issue = get_object_or_404(Issue, id=issue_id)
     observed_project = issue.project
 
     if request.user != observed_project.user and not observed_project.collaborators.filter(id = request.user.id).exists():
         return HttpResponse('Unauthorized', status=401)
     
-    #get label
+    # get label
     label = get_object_or_404(Label, id=label_id)
 
     issue.labels.remove(label)
 
-    q = LableEvent.objects.create(user=request.user, time= datetime.datetime.now(), issue=issue, label=label, state="RE")
+    LableEvent.objects.create(user=request.user, time= datetime.datetime.now(), issue=issue, label=label, state="RE")
 
     return HttpResponseRedirect('/issue/' + str(issue_id) + '/')
 
