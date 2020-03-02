@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # start django
 python manage.py collectstatic --noinput
 python manage.py makemigrations
