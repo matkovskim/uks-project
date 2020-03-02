@@ -23,6 +23,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
+from django.conf import settings
+from django.core.cache.backends.base import DEFAULT_TIMEOUT
+from django.views.decorators.cache import cache_page
+
+
+CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
+
+
 # home page
 def index(request): 
     return render(request, 'uks_app/index.html') #optional third argument context
@@ -397,12 +405,15 @@ def profile(request, id=None):
             if i.user == request.user:              # if it is a logged in user it can neither be unfollowed nor followed
                 final_for_followers.append(False)
 
-    
-    project_colab = request.user.collaborators.all()
+    project_colab = []
     if selected_user == request.user:
+        project_colab = selected_user.collaborators.all()
         projects = ObservedProject.objects.filter(user=selected_user)
+    elif request.user.is_authenticated:
+        my_collaborations = request.user.collaborators.all()
+        projects = ObservedProject.objects.filter(user=selected_user).exclude(Q(public=False) & ~Q(id__in=my_collaborations))
     else:
-        projects = ObservedProject.objects.filter(user=selected_user).exclude(Q(public=False) & ~Q(id__in=project_colab))
+        projects = ObservedProject.objects.filter(user=selected_user).exclude(public=False)
 
     update_possible = selected_user == request.user
     follow_possible = selected_user != request.user and selected_user.profile not in my_following and request.user.is_authenticated

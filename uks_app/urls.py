@@ -6,6 +6,10 @@ from django.conf.urls.static import static
 from django.contrib.auth.decorators import login_required
 from .models import ObservedProject
 from . import views
+from django.core.cache.backends.base import DEFAULT_TIMEOUT
+from django.views.decorators.cache import cache_page
+
+CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 
 urlpatterns = [ 
     path('', views.index, name='index'),
