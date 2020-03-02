@@ -83,23 +83,20 @@ WSGI_APPLICATION = 'uks_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.postgresql',
-#        'NAME': config('DB_NAME'),
-#        'USER': config('DB_USER'),
-#        'PASSWORD': config('DB_PASSWORD'),
-#        'HOST': config('DB_HOST'),
-#        'port': 5432
-#    }
-#}
+POSTGRES_HOST = os.getenv('POSTGRES_SERVICE_HOST', '0.0.0.0')
+POSTGRES_PORT = os.getenv('POSTGRES_SERVICE_PORT', 5432)
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': POSTGRES_HOST,
+        'port': POSTGRES_PORT,
     }
 }
+
  
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators

@@ -8,12 +8,6 @@ ARG email_host_user
 ARG email_host_password
 ARG email_use_tls
 
-ARG db_password
-ARG db_user
-ARG db_name
-ARG db_host
-ARG db_port
-
 ARG debug
 ARG secret_key
 ARG allowed_hosts
@@ -25,12 +19,6 @@ ENV EMAIL_PORT=$email_port
 ENV EMAIL_HOST_USER=$email_host_user
 ENV EMAIL_HOST_PASSWORD=$email_host_password
 ENV EMAIL_USE_TLS=$email_use_tls
-
-ENV DB_PASSWORD=$db_password
-ENV DB_USER=$db_user
-ENV DB_NAME=$db_name
-ENV DB_HOST=$db_host
-ENV DB_PORT=$db_port
 
 ENV DEBUG=$debug
 ENV SECRET_KEY=$secret_key

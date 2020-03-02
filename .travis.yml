@@ -1,0 +1,30 @@
+language: python
+python:
+- '3.6'
+env:
+  global:
+  - DJANGO_SETTINGS_MODULE="uks_project.test_settings"
+  - secure: ttwAUJii9tBi/3Jo2703j+WLke0BO9yAE6ejZSuMdhXJxbJjvF9GduGHQqUNWiScaPDqfnQb+ZiYijPQ+0PsvT0B/8qCwHmfegJxl4rLdygyHTeFqFz9P4z6zfnhvbGNGUNcfpILOsbcpXuZ/o+eVJyYQDKEOetf8qDWOqu9FP0HF8URA78zHQXyihzH1RTref/BB1hD5LVgQcQgVOmrYI2kneCTWjO4Wt2vux7UyShimXGdGQwhoabnSiDpNJ9ngU0Xr5tvgGfcECkJq5zIO06j9qUbCb32n4OgHcQ8hAI2izrA9EnBIQPqPO/B6jrx+x9z6BbeHfIZSADaZzez3cFweYZBN4g2qa11j67xSBSUgELQYMBfJICa1FnQkSPLxED5h6cJHV8GLTt4dH27a09Aan94K4paItliAPH3uV5C6QU13JGw290nZlAE1xtrYxf8X7497xG/5/bMKffz/k6iWH44GMGpa3vLtle7gchh7O7HA9v9ZTbmLTb8ZgZnu6jTidBPVB4v9R38oWO/zCs9dvAiiBgOnF0EK6ljMbstGN1gz4s4c8enUF1Xxl8Nf1K5UIVKeass0FPvShnzYNNhR4dZad9iI3fsnmk5xazj67XNWf0Pr9iS3GQZEt6t5Mkj8miUrxqvHI9o+S/XexsDtY71RbM6p1iRph3UJl4=
+  - secure: O6XVRd44EmdCwm8NsgYTfxvT7HfP26CcXfwhuyek6qidDZDLHUKm5IjG/zQJs7x6w1W2tz5nzvlujjXCdikEk8bxXuMQJ7ygVTmr0unqgfYIeKrJeJUoI6QcLiL4lXjb3NRhC1GsXGDhAi+ER7EAglCVFRQy/V78GwnNIXLqB0ZwH9o2uOVN7EXkuwNlPkGRtyNs2LUlgQGpIgda1WvJ7ODKPeZZPrtfGUAO0GroVh1VU6VMff2cyKL43n+qx+y7enwfIYY794mV4oEbLYqQQU0nFwSfeVrppnzwXUlHMPtFHXh08gEKdlMSO6gI3TTpYg7sYVMjSexXAHdlhguYkpHwTIeh/YtQDx4WbFvhdTt4hH7BCScErKJRDz041ozw7mLs1VDSaAUkuBosbVYlYADmfLscprKgpW4dNkUle+iMFwQOgWsQwIg5hkQLlS/sOEivAQNhAeUSR82Tk8UtScLTyj6nlafOxEOqKwqWQf/BN1AE21ycfeG/ysgVoCULrZDvKE160DfcTfXDs17RrXklxlCipFzk7Ggo3uxKCQsXP+cHIZXt8GEsedKnMQZU4NzALX2grrQp/tg3WV9waiGJca6dt0yTNkS4EClZE79aK69FYdpZSZ+r28dU104KnE+E8lhzAhZls0dLKOmxdfch4ZukyR6cCe+sguqdLt0=
+services:
+- docker
+- postgresql
+install:
+- pip install -r requirements.txt
+script:
+- python manage.py test
+before_script:
+- psql -c "CREATE DATABASE travisci;" -U postgres
+after_success:
+- docker build -t ftnukstim3.azurecr.io/uks --build-arg git_key=$SOCIAL_AUTH_GITHUB_KEY --build-arg git_secret=$SOCIAL_AUTH_GITHUB_SECRET .
+- echo "$AZURE_PASSWORD" | docker login -u "$AZURE_USERNAME" --password-stdin ftnukstim3.azurecr.io
+- docker tag uks ftnukstim3.azurecr.io/uks
+- docker push ftnukstim3.azurecr.io/uks
+deploy:
+  provider: script
+  script: bash scripts/deploy.sh
+  on:
+    branch: release-1.0
+branches:
+  only:
+  - release-1.0
