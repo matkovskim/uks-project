@@ -390,7 +390,6 @@ def profile(request, id=None):
     if request.user.is_authenticated: # if the user is logged in
         my_following = request.user.profile.following.all() 
         for i in selected_user_following: 
-            print('? ',  i.user == request.user)
             if i.user.profile in my_following:      # if the user is followed by the logged in user, it can be unfollowed    
                 final_for_following.append(False)
             if i.user.profile not in my_following:  # if the user is not followed by the logged in user, it can be followed
