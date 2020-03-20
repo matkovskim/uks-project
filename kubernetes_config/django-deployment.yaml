@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: django-service
-          image: ftnukstim3.azurecr.io/uks
+          image: ukstim3ftn.azurecr.io/uks
           ports:
             - containerPort: 8000
           env:
@@ -38,17 +38,22 @@ spec:
           volumeMounts:
             - name: postgres-volume-mount
               mountPath: /var/lib/postgresql/data
-  
+            - name: media-volume-mount
+              mountPath: /code/media/profile_pics
+
       volumes:
         - name: postgres-volume-mount
           persistentVolumeClaim:
             claimName: postgres-pvc
+        - name: media-volume-mount
+          persistentVolumeClaim:
+            claimName: media-pvc
 ---
 apiVersion: v1
 kind: Service
 metadata:
   annotations:
-    service.beta.kubernetes.io/azure-dns-label-name: ftnukstim3
+    service.beta.kubernetes.io/azure-dns-label-name: ukstim3
   name: django-service
 spec:
   selector:
