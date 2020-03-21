@@ -15,7 +15,6 @@ from uks_app.forms import ProjectForm, IssueForm, UserRegisterForm, UserUpdateFo
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 import json
-import logging
 import datetime
 import re
 
@@ -33,23 +32,6 @@ CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 # home page
 def index(request): 
     return render(request, 'uks_app/index.html') #optional third argument context
-
-#search projects from name
-def search_projects(request):
-    search_name = request.GET['search']
-    observed_projects = ObservedProject.objects.filter(name__icontains=search_name.lower()).filter(public = 'True')
-    issues_list =Issue.objects.filter(title__icontains=search_name.lower(), project__public='True')
-    users_list=User.objects.filter(Q(first_name__icontains = search_name.lower()) | Q(last_name__icontains = search_name.lower()) | Q(username__icontains = search_name.lower()) & Q(is_staff='False'))
-    user = request.user # logged in user
-    follow_possible = []
-    if user.is_authenticated: # if the user is logged in
-        users_following = user.profile.following.all() # users that the logged in user is following
-        for user in users_list:                        
-            if user.profile in users_following: # already follows, so he can only unfollow him
-                follow_possible.append(False) 
-            else:
-                follow_possible.append(True)    # he doesn't follow him, so he can follow him
-    return render(request, 'uks_app/search_result.html', {'observed_projects': observed_projects, 'issues_list':issues_list, 'users_list':users_list, 'follow_possible': follow_possible, 'request_user': user})
 
 # user registration 
 def register_user(request):
@@ -140,66 +122,6 @@ def profile_update(request, id=None):
         'p_form' : p_form
     }
     return render(request, 'uks_app/profile_update.html', context)
-
-#change code
-@require_http_methods(["POST"])
-@csrf_exempt
-def hook_receiver_view(request):
-    request_body_string = request.body.decode("utf-8")
-    data = json.loads(request_body_string)
-    commit_url=""
-    repository_url=""
-    message=""
-    try:
-        commits=data["commits"]
-        repository_url=data["repository"]["html_url"]
-        project= ObservedProject.objects.filter(git_repo = repository_url)
-        if len(project)!=0 :
-            for commit in commits:
-                commit_url=commit["url"]
-                message=commit["message"]
-                email=commit["author"]["email"]
-                username=commit["author"]["name"]
-                time=commit["timestamp"]
-                users=User.objects.filter(Q(email = email))
-                if len(users)==0:
-                    q = CodeChange.objects.create(url=commit_url, project=project.first(), message=message, date_time=time, github_username=username)
-                else:
-                    q = CodeChange.objects.create(url=commit_url, project=project.first(), message=message, user=users[0], date_time=time, github_username=username)
-                
-                #povezivanje sa issuima
-                regex_matches = re.findall('~(.+?)~', message)
-                regex_matches_close = re.findall('close ~(.+?)~', message)
-                
-                if len(regex_matches_close)!=0 :
-                    for match in regex_matches_close:
-                        issue= Issue.objects.filter(Q(title = match) & Q(project = project.first()))                        
-                        if len(issue) != 0:
-                            related_issue=issue.first()
-                            related_issue.state='CL'
-                            related_issue.save()
-                            if len(users)!=0:
-                                code_change_event = CodeChangeEvent.objects.create(code_change=q, issue=issue[0], time=time, user=users[0], closing_event=True)
-                            else:
-                                code_change_event = CodeChangeEvent.objects.create(code_change=q, issue=issue[0], time=time, closing_event=True)
-            
-                if len(regex_matches)!=0 :
-                    for match in regex_matches:
-                        if match not in regex_matches_close:
-                            issue= Issue.objects.filter(Q(title = match) & Q(project = project.first()))
-                            if len(issue) != 0:
-                                if len(users)!=0:
-                                    code_change_event = CodeChangeEvent.objects.create(code_change=q, issue=issue[0], time=time, user=users[0], closing_event=False)
-                                else:
-                                    code_change_event = CodeChangeEvent.objects.create(code_change=q, issue=issue[0], time=time, closing_event=False)
-            return HttpResponse('success')
-        else:
-            return HttpResponse('Project does not exist', status=400)
-
-    except Exception as e:
-        return HttpResponse('Data is not valid', status=400)
-
-
 
 # one milestone detailed view
 class OneMilestoneView(generic.DetailView):

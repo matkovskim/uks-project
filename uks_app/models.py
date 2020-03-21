@@ -73,7 +73,7 @@ class Event(PolymorphicModel):
         base_manager_name = 'non_polymorphic'
 
 class LableEvent(Event):
-    label = models.ForeignKey(to=Label, null=True, on_delete=models.CASCADE)
+    label = models.ForeignKey(to=Label, null=False, on_delete=models.CASCADE)
     state = models.CharField(
         max_length=2,
         choices=EVENT_STATE
@@ -117,7 +117,7 @@ class IssueChange(Event):
     )
 
 class AssignIssueEvent(Event):
-    assigned_user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE)
+    assigned_user = models.ForeignKey(to=User, null=False, on_delete=models.CASCADE)
 
 class SubIssueEvent(Event):
     subissue = models.ForeignKey(to=Issue, null=False, on_delete=models.CASCADE)
