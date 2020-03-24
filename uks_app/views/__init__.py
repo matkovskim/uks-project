@@ -5,3 +5,5 @@ from .label_views import *
 from .other_views import *
 from .search_views import *
 from .code_change_views import *
+from .comment_views import *
+from .followers_views import *
