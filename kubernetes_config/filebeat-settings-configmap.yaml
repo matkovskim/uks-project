@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: monitoring
+  name: filebeat-config
+  labels:
+    app: filebeat
+data:
+  filebeat.yml: |-
+    filebeat.inputs:
+    - type: container
+      paths:
+        - /var/log/containers/*.log
+      processors:
+        - add_kubernetes_metadata:
+            in_cluster: true
+            host: ${NODE_NAME}
+            matchers:
+            - logs_path:
+                logs_path: "/var/log/containers/"
+
+    filebeat.modules:
+      - module: system
+        syslog:
+          enabled: true
+        auth:
+          enabled: true
+
+    filebeat.autodiscover:
+      providers:
+        - type: kubernetes
+          templates:
+            - condition.equals:
+                kubernetes.labels.app: mongo
+              config:
+                - module: mongodb
+                  enabled: true
+                  log:
+                    input:
+                      type: docker
+                      containers.
+                        ids:
+                        - "*"
+
+    processors:
+      - drop_event:
+          when.or:
+              - and:
+                  - regexp:
+                      message: '^\d+\.\d+\.\d+\.\d+ '
+                  - equals:
+                      fileset.name: error
+              - and:
+                  - not:
+                      regexp:
+                          message: '^\d+\.\d+\.\d+\.\d+ '
+                  - equals:
+                      fileset.name: access
+      - add_cloud_metadata:
+      - add_kubernetes_metadata:
+      - add_docker_metadata: ~
+
+    output.elasticsearch:
+      hosts: ['${ELASTICSEARCH_HOST:elasticsearch}:${ELASTICSEARCH_PORT:9200}']
+      username: ${ELASTICSEARCH_USERNAME}
+      password: ${ELASTICSEARCH_PASSWORD}
+
+    setup.kibana:
+      host: '${KIBANA_HOST:kibana}:${KIBANA_PORT:5601}'
+
+    setup.dashboards.enabled: true
+    setup.template.enabled: true
+
+    setup.ilm:
+      policy_file: /etc/indice-lifecycle.json

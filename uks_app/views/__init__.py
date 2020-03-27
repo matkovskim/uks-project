@@ -7,3 +7,4 @@ from .search_views import *
 from .code_change_views import *
 from .comment_views import *
 from .followers_views import *
+from .users_views import *
