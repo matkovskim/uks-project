@@ -11,7 +11,11 @@
     <link rel="stylesheet" type="text/css" href="{% static 'uks_app/static.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css">
     <title>{% block title %} {% endblock %}</title>
-    <body>
+    
+    {% if request.path == '/' %}
+    <link rel="stylesheet" type="text/css" href="{% static 'uks_app/background.css' %}">
+    {% endif %}
+    <body class="background-image-class">
         <!-- navigation bar -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <span class="navbar-brand mb-0 h1">MiniHub</span>

@@ -10,6 +10,10 @@ from django.urls import reverse_lazy
 from uks_app.models import ObservedProject, Issue, IssueChange, Event, SubIssueEvent, AssignIssueEvent
 from uks_app.forms import IssueForm, AssignIssueForm
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.decorators import api_view
+
 # create a new issue or update an existing issue
 @login_required
 def create_update_issue(request, project_id, issue_id=None):
@@ -17,7 +21,7 @@ def create_update_issue(request, project_id, issue_id=None):
     # get observed project
     observed_project = get_object_or_404(ObservedProject, id=project_id)
 
-    # issue_id == None -> Create
+    # issue_id == None -> Create 
     # issue_id != None -> Update
     observed_issue = get_object_or_404(Issue, pk=issue_id) if issue_id else None
 
@@ -152,3 +156,54 @@ class OneIssueView(generic.DetailView):
         if not entity.project.public and user != entity.project.user and not entity.project.collaborators.filter(id = user.id).exists():
             return HttpResponse('Unauthorized', status=401)
         return super(OneIssueView, self).dispatch(request, *args, **kwargs)
+
+class ChartData(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request, project_id, format=None):
+        data = {}
+        temp_data = []
+
+        issues = Issue.objects.filter(project_id=project_id).all()
+        for issue in issues:
+
+            create_date = issue.create_time.date()
+
+            temp_data.append((str(create_date), 'open'))
+
+            events = Event.objects.filter(issue_id=issue.id).order_by('time')
+
+            for event in events:
+                if event.__class__.__name__ == 'IssueChange':
+                    date = event.time.date()
+                    if event.state == 'CL':
+                        temp_data.append((str(date), 'close'))
+                    else:
+                        temp_data.append((str(date), 'open'))
+
+        opened_issues = 0
+
+        sorted_data = sorted(temp_data, key=lambda x: x[0])
+
+        for entry in sorted_data:
+            if entry[1] == 'open':
+                opened_issues += 1
+            else:
+                opened_issues -= 1
+            data[str(entry[0])] = opened_issues
+
+
+        labels = [] 
+        values = []
+
+        for i in sorted (data.keys()) :  
+            labels.append(i)
+            values.append(data[i])
+
+        response_data = {
+            "labels": labels,
+            "values": values,
+        }
+        return Response(response_data)
+

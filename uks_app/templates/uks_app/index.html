@@ -3,11 +3,16 @@
 {% block content %}
     <div class="container h-100">
         <div class="row h-100 align-items-center">
-            <div class="col-12 text-center">
-                <h1 class="font-weight-light">Welcome to MiniHub</h1>
-                <p class="lead">New to MiniHub? Create an account.</p>
-                <!--<button class="btn btn-lg btn-dark btn-login text-uppercase font-weight-light mb-2" [routerLink]="['/registration']">Register</button>-->
+            <div class="col-12 text-center" style="margin-top: 112px;">
+                <h1 style="font-size: 48pt;">Welcome to MiniHub</h1>
+                {% if user.is_authenticated %}
+                <p class="lead" style="font-size: 20pt;">Manage your chaos.</p>
+                {% else %}
+                <p class="lead" style="font-size: 20pt;">New to MiniHub? <a href="{% url 'register' %}" class="black-link">Create an account.</a></p>
+
+                {% endif %}
             </div>
         </div>
     </div>
+    <p></p>
 {% endblock %}

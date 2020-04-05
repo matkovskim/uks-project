@@ -1,0 +1,9 @@
+.background-image-class  {
+    height: 100vh;
+    min-height: 500px;
+    background-image: url("https://images.pexels.com/photos/3759098/pexels-photo-3759098.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260");
+    background-color: #cccccc;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}

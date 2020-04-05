@@ -1,40 +1,18 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponseRedirect, HttpResponse
+import datetime
+
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.views.generic.edit import DeleteView
 from django.views import generic
 from django.urls import reverse_lazy
-from django.views.generic.edit import DeleteView
+from django.http import HttpResponseRedirect, HttpResponse
 
-from uks_app.models import ObservedProject, Issue, Milestone, MilestoneChange, Event, Label, User, Comment, CommentChange, CodeChangeEvent, AssignIssueEvent, IssueChange, LableEvent, SubIssueEvent
-from uks_app.forms import ProjectForm, IssueForm, MilestoneForm, LabelForm, ChooseLabelForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm, ChooseMilestoneForm, CommentForm, ChooseSubissueForm, AssignIssueForm
-import logging
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q
-from uks_app.models import ObservedProject, Issue, CodeChange
-from uks_app.forms import ProjectForm, IssueForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm
-from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-import json
-import datetime
-import re
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.decorators import api_view
-
-from django.conf import settings
-from django.core.cache.backends.base import DEFAULT_TIMEOUT
-from django.views.decorators.cache import cache_page
+from uks_app.models import Milestone, MilestoneChange, ObservedProject, Issue
+from uks_app.forms import MilestoneForm, ChooseMilestoneForm
 
 
-CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
-
-# home page
-def index(request): 
-    return render(request, 'uks_app/index.html') #optional third argument context
-
-# one milestone detailed view
-class OneMilestoneView(generic.DetailView):
+# one milestone detailed view 
+class OneMilestoneView(generic.DetailView): 
     model = Milestone
     template_name = 'uks_app/one_milestone.html'
 
@@ -47,7 +25,7 @@ class OneMilestoneView(generic.DetailView):
         return super(OneMilestoneView, self).dispatch(request, *args, **kwargs)
 
 #delete milestone
-class MilestoneDelete(DeleteView):
+class MilestoneDelete(DeleteView): 
     template_name = 'uks_app/delete_issue.html'
     model = Milestone
 
@@ -147,56 +125,4 @@ def remove_milestone(request, milestone_id, issue_id):
     user = request.user
     milestone_change = MilestoneChange.objects.create(time = datetime.datetime.now(), user = user, issue = issue, checkpoint=milestone, add=False) 
 
-    return HttpResponseRedirect('/issue/' + str(issue_id) + '/') 
-
-class ChartData(APIView):
-    authentication_classes = []
-    permission_classes = []
-
-    def get(self, request, project_id, format=None):
-        data = {}
-        temp_data = []
-
-        issues = Issue.objects.filter(project_id=project_id).all()
-        for issue in issues:
-
-            create_date = issue.create_time.date()
-
-            temp_data.append((str(create_date), 'open'))
-
-            events = Event.objects.filter(issue_id=issue.id).order_by('time')
-
-            for event in events:
-                if event.__class__.__name__ == 'IssueChange':
-                    date = event.time.date()
-                    if event.state == 'CL':
-                        temp_data.append((str(date), 'close'))
-                    else:
-                        temp_data.append((str(date), 'open'))
-
-        opened_issues = 0
-
-        sorted_data = sorted(temp_data, key=lambda x: x[0])
-
-        for entry in sorted_data:
-            if entry[1] == 'open':
-                opened_issues += 1
-            else:
-                opened_issues -= 1
-            data[str(entry[0])] = opened_issues
-
-
-        labels = [] 
-        values = []
-
-        for i in sorted (data.keys()) :  
-            labels.append(i)
-            values.append(data[i])
-
-        response_data = {
-            "labels": labels,
-            "values": values,
-        }
-        return Response(response_data)
-
- 
+    return HttpResponseRedirect('/issue/' + str(issue_id) + '/')  

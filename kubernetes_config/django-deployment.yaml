@@ -34,17 +34,45 @@ spec:
   
             - name: DB_NAME
               value: uks
+              
+            - name: EMAIL_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: mail-credentials
+                  key: email_port
+              
+            - name: EMAIL_HOST_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mail-credentials
+                  key: email_host_user
+              
+            - name: EMAIL_HOST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mail-credentials
+                  key: email_host_password
+            
+            - name: EMAIL_USE_TLS
+              valueFrom:
+                secretKeyRef:
+                  name: mail-credentials
+                  key: email_use_tls
 
+            - name: DEBUG
+              value: True
+              
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: secret-credentials
+                  key: secret
+         
           volumeMounts:
-            - name: postgres-volume-mount
-              mountPath: /var/lib/postgresql/data
             - name: media-volume-mount
               mountPath: /code/media/profile_pics
 
       volumes:
-        - name: postgres-volume-mount
-          persistentVolumeClaim:
-            claimName: postgres-pvc
         - name: media-volume-mount
           persistentVolumeClaim:
             claimName: media-pvc
@@ -53,7 +81,7 @@ apiVersion: v1
 kind: Service
 metadata:
   annotations:
-    service.beta.kubernetes.io/azure-dns-label-name: ukstim3
+    service.beta.kubernetes.io/azure-dns-label-name: ukstim-3
   name: django-service
 spec:
   selector:
