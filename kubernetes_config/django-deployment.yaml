@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: django-service
-          image: ukstim3ftn.azurecr.io/uks
+          image: tim3uks.azurecr.io/uks
           ports:
             - containerPort: 8000
           env:
@@ -80,8 +80,6 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    service.beta.kubernetes.io/azure-dns-label-name: ukstim-3
   name: django-service
 spec:
   selector:
