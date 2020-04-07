@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<h3 class="mb-3 ">{{object.issue.title}}
+    <span style="float: right;">
+        <a href="{% url 'one_issue' object.issue.id %}"  class="btn btn-secondary"><i class="fas fa-arrow-circle-left mr-2"></i>Return to issue</a>
+    </span>
+</h3>
+
+
+<p class="card-text border-bottom">The original comment: {{object.description}}</p>
+
+
+    <div style="margin-top: 20px">
+    <span style="color: #17a2b8; font-size: 1.25rem">Comment history:</span>
+    <div style="margin-top: 10px">
+        {% if object.commentchange_set.all %}
+            <!-- list of comments -->
+            {% for comment_change in object.commentchange_set.all %}
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <div class="d-flex bd-highlight border-bottom mb-2">
+                            <div class="p-2 bd-highlight">
+                                    <img style="margin-right: 5px; margin-bottom: 7px;" class="rounded " width="30" height="30" src="{{ object.user.profile.image.url }}">
+                                    <span style="font-size: 1.25rem; color: #17a2b8" class="card-title"> {{object.user}} </span>
+                                    <span class="text-muted"> changed comment on {{comment_change.time}} </span>
+                            </div>
+                            
+                        </div>
+                        <div class="row">
+                            <i style="margin-right: 10px; margin-top: 8px; color: white" class="fas fa-ellipsis-h"></i>
+                            <p class="card-text">{{comment_change.newComment}}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>There are no changes for this comment.</p>
+        {% endif %}
+    </div>
+</div>
+<!-- END ONE_ISSUE_HTML -->
+
+
+
+{% endblock %}

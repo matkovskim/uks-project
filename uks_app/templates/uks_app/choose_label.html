@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<div class='row'>
+    <div class = 'col-lg-8 m-auto'>
+        <h4>Add a label</h4>
+        <p>Choose one or more labels used in this project</p>
+        
+        <hr>
+        
+        <form method='POST'> 
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button type="submit" class="btn btn-info">Confirm</button>
+            <a type="button" href="../" class="btn btn-secondary">Cancel</a>
+
+            {{form.errors}}
+        </form>
+
+        <p class="mt-3">Can't find the one you need? <a class="blue-link" href="{% url 'new_label' issue.id %}"> Click here </a> to create a new label.</p>
+    </div>
+</div>
+{% endblock %}

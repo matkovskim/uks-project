@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: monitoring
+  name: elasticsearch
+  labels:
+    app: elasticsearch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+      annotations:
+        pod.beta.kubernetes.io/init-containers: '[
+            {
+                "name": "init-ghost",
+                "image": "alpine:3.6",
+                "command": ["sh", "-c", "chmod u+x /start-script/start.sh"],
+                "volumeMounts": [{"name": "start-script-volume", "mountPath": "/start-script"}]
+            }
+        ]'
+    spec:
+      securityContext:
+        fsGroup: 1000 
+      containers:
+        - name: elasticsearch
+          image: elasticsearch:7.6.1
+          command: ["/bin/sh","-c"]
+          args: ["/start-script/start.sh"]
+          ports:
+            - containerPort: 9200
+            - containerPort: 9300
+          env:
+            - name: ES_JAVA_OPTS
+              value: -Xmx256m -Xms256m
+            - name: discovery.type
+              valueFrom:
+                configMapKeyRef: 
+                  name: start-script
+                  key: discovery.type
+          volumeMounts:
+            - name: elasticsearch-volume-mount
+              mountPath: /usr/share/elasticsearch/data/
+            - mountPath: /start-script
+              name: start-script-volume
+            
+      volumes:
+        - name: elasticsearch-volume-mount
+          persistentVolumeClaim:
+            claimName: elasticsearch-pvc
+        - name: start-script-volume
+          configMap:
+            name: start-script
+            defaultMode: 0744
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: monitoring
+  name: elasticsearch
+spec:
+  selector:
+    app: elasticsearch
+  ports:
+  - name: "9200"
+    port: 9200
+    targetPort: 9200
+  - name: "9300"
+    port: 9300
+    targetPort: 9300
+  type: LoadBalancer

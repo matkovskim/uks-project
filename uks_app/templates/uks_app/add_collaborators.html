@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<div class='row'>
+    <div class = 'col-lg-8 m-auto'>
+        <h3>Add a collaborator</h3>
+        <hr>
+        <form class="form-inline" method="POST">
+            {% csrf_token %}
+            <input class="form-control mr-sm-2" style="width: 20em;" type="text" name="search" placeholder="Search by username, full name, or email" aria-label="Search">
+            <button type="submit" class="btn btn-info">Confirm</button>
+        </form>
+        {% if result %}
+            <!-- list of users -->
+            {% for user in result %}
+                <div class="card mt-2">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="media mb-4">
+                                <img class="img-thumbnail account-img" height="60" width="60" src="{{ user.profile.image.url }}">
+                            </div>
+                            <div class="media-body">
+                                <h5 class="card-title mb-0 ml-3"><a class="blue-link" href="{% url 'profile' user.username %}"> {{user.username}}</a></h5>
+                                <small class="text-secondary ml-1">&nbsp; {{user.first_name}} {{user.last_name}}</small>
+                            </div>
+                            <div>
+                                <a class="btn btn-md btn-info" href="{% url 'add_collaborators' observed_project.id user.id %}"><i class="fas fa-user-plus mr-1"></i> Add to project {{observed_project.name}}</a> 
+                            </div>
+                        </div>    
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="mt-2" >There are no users.</p>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

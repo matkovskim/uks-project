@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: monitoring
+  name: start-script
+data:
+  start.sh: |
+    #!/bin/bash
+    echo "start.sh"
+    set -ex
+
+    chown -R elasticsearch:elasticsearch /usr/share/elasticsearch
+    chown -R elasticsearch:elasticsearch /usr/share/elasticsearch/data
+
+    su elasticsearch /usr/local/bin/docker-entrypoint.sh /usr/share/elasticsearch/bin/elasticsearch
+  discovery.type: 'single-node'

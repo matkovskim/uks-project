@@ -1,0 +1,123 @@
+@startuml
+  class ObservedProject {
+        name: string
+        git_repo: string
+        description: string
+        public : boolean
+  }
+  ObservedProject *-- "0..*" Issue
+  ObservedProject "0..*" -- "1..1" User
+  ObservedProject "0..*" -- "0..*" User :collaborators
+
+  class Issue {
+        title: string
+        description: string
+        state: ProblemState
+        create_time: timestamp
+          
+  }
+  Issue "0..*" -- "0..*" Issue :parent_issue
+  Issue "0..*" -- "1..1" User
+
+  class Label {
+        name: string
+        color: string
+  }
+  Issue "0..*" -- "0..*" Label
+
+  class Milestone {
+        title: string
+        date: date
+        description: string
+  }
+  Issue "*" -- "*" Milestone
+  ObservedProject *--> "*" Milestone
+
+  class Event {
+        time: timestamp
+  }
+  Issue *-- "1..*" Event
+  Event "*" -- User
+
+  class LableEvent{
+        state: EventState
+  }
+  LableEvent "0..*" -- "1..1" Label
+
+  class Comment {
+        description: string
+  }
+
+  class CommentChange{
+        newComment: string,
+        time: timestamp
+  }
+  CommentChange "0..*" -- "1..1" Comment
+
+  class CodeChange{
+        url: string
+        message: string
+        date_time:timestamp
+        github_username:string
+  }
+  CodeChange "0..*" -- "1..1" ObservedProject
+  CodeChange "0..*" -- "1..1" User
+
+  class CodeChangeEvent{
+        closing_event: boolean
+  }
+  CodeChangeEvent "0..*" -- "1..1" CodeChange
+
+  class IssueChange{
+        state: ProblemState
+  }
+
+  class AssignIssueEvent{
+  }
+  AssignIssueEvent "0..*" -- "1..1" User
+
+  class SubIssueEvent{
+        state: EventState
+  }
+  SubIssueEvent "0..*" -- "1..1" Issue
+  
+  class MilestoneChange {
+        add: boolean
+  }
+  MilestoneChange --> "0..1" Milestone :checkpoint
+
+  class ResponsibleUserChange {
+       responsibleUser: User
+  }
+ 
+  class Profile{
+        image:image
+        user: User
+  }
+  Profile "0..*" -- "0..*" User :following
+
+  class User {
+        name: string
+        email: EMail
+  }
+  
+  Event <|-- LableEvent
+  Event <|-- CodeChangeEvent
+  Event <|-- IssueChange
+  Event <|-- AssignIssueEvent
+  Event <|-- ResponsibleUserChange
+  Event <|-- SubIssueEvent
+  Event <|-- MilestoneChange
+  Event <|-- Comment
+  
+  enum ProblemState {
+        Open,
+        Close
+  }
+  
+  enum EventState {
+        Created,
+        Removed
+  }
+
+@enduml

@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-service
+  labels:
+    app: django-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: django-service
+  template:
+    metadata:
+      labels:
+        app: django-service
+    spec:
+      containers:
+        - name: django-service
+          image: tim3uks.azurecr.io/uks
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: user
+  
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: password
+  
+            - name: DB_NAME
+              value: uks
+              
+            - name: EMAIL_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: mail-credentials
+                  key: email_port
+              
+            - name: EMAIL_HOST_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mail-credentials
+                  key: email_host_user
+              
+            - name: EMAIL_HOST_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mail-credentials
+                  key: email_host_password
+            
+            - name: EMAIL_USE_TLS
+              valueFrom:
+                secretKeyRef:
+                  name: mail-credentials
+                  key: email_use_tls
+
+            - name: DEBUG
+              value: 'True'
+              
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: secret-credentials
+                  key: secret
+         
+          volumeMounts:
+            - name: media-volume-mount
+              mountPath: /code/media/profile_pics
+
+      volumes:
+        - name: media-volume-mount
+          persistentVolumeClaim:
+            claimName: media-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-service
+spec:
+  selector:
+    app: django-service
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+  type: LoadBalancer      

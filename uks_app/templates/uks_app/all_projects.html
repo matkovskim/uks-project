@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h3 class="mt-4" >
+      Explore projects
+      <span style="float: right;"><a href="{% url 'new_project' %}" class="btn btn-info"><i class="fas fa-folder-plus mr-1"></i> New project</a></span>
+    </h3>
+
+    <hr>
+
+    {% if project_list %}
+        <div class="row backg mt-4">
+            <!-- list of all projects -->
+            {% for project in project_list %}
+                <div class="col-lg-6 mb-2">
+                    <div class="card text-center">
+                        <div class="card-header">
+                            <h5><a class="blue-link" href="{% url 'one_project' project.id %}">{{project.name}}</a></h5>
+                            <h6>{{project.git_repo}}</h6>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">{{project.description}}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>There are no projects available.</p>
+    {% endif %}
+{% endblock %}

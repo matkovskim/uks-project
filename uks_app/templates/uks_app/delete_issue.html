@@ -1,0 +1,20 @@
+{% extends 'base_without_nav.html' %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-7 m-auto text-center">
+        <form method="post">
+            {% csrf_token %}
+            <p>Are you sure you want to delete {{ object.title }}?</p>
+            {% if object.subissues.count > 0 %}
+                <p>Deleting this issue will also delete all of its subissues.</p>
+            {% endif %}
+            <button type="submit" class="btn btn-danger">Confirm</button>
+            <a type="button" href='../' class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+
+
+{% endblock %}

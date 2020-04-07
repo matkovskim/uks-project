@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'uks_app/style.css' %}">
+
+{% block content %}
+<div class="row">
+  <div class="col-md-3">
+    <div class="media mb-4">
+      <img class="img-thumbnail account-img" src="{{ selected_user.profile.image.url }}">
+    </div>
+    <div class="mb-4 media-body">
+      <h4 class="account-heading">{{ selected_user.username }} </h4>
+      <p class="text-secondary">{{ selected_user.email }}</p>
+      {% if update_possible %}
+        <a class="btn btn-md btn-block btn-dark" href="{% url 'profile_update' selected_user.username %}">Update Profile</a>
+      {% endif %}
+      {% if follow_possible %}
+        <a id="{{selected_user.username}}" class="btn btn-info btn-block follow text-white"> Follow </a></h2>
+      {% endif %}
+       {% if unfollow_possible %}
+        <a id="{{selected_user.username}}"  class="btn btn-info btn-block unfollow text-white"> Unfollow </a></h2>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-md-9">
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+      <li class="nav-item">
+          <a class="nav-link tab-link active" id="code-tab" data-toggle="tab" href="#projects" role="tab" aria-controls="projects" aria-selected="true"><i style="margin-right:6px" class="fas fa-project-diagram"></i></i>Projects ({{projects|length}}) </a>
+      </li>
+      {% if user == selected_user%}
+      <li class="nav-item">
+          <a class="nav-link tab-link" id="collaborator-tab" data-toggle="tab" href="#collaborator" role="tab" aria-controls="collaborator" aria-selected="false"><i style="margin-right:6px" class="fas fa-project-diagram"></i>Collaborations ({{project_colab|length}}) </a>
+      </li>
+      {% endif%}
+      <li class="nav-item">
+          <a class="nav-link tab-link" id="issue-tab" data-toggle="tab" href="#followers" role="tab" aria-controls="followers" aria-selected="false"><i style="margin-right:6px" class="fas fa-users"></i>Followers ({{selected_user_followers|length}})</a>
+      </li>
+      <li class="nav-item">
+          <a class="nav-link tab-link" id="issue-tab" data-toggle="tab" href="#following" role="tab" aria-controls="following" aria-selected="false"><i style="margin-right:6px" class="fas fa-users"></i>Following ({{selected_user_following|length}}) </a>
+      </li>
+  </ul>
+  
+  <div class="tab-content" id="myTabContent">
+    <!-- projects tab -->
+      <div class="tab-pane fade show active" id="projects" role="tabpanel" aria-labelledby="code-tab">
+          <div>
+              {% if user == selected_user %}
+              <div style="margin-right: 6px" class="row justify-content-end mt-2">
+                <span><a href="{% url 'new_project' %}" class="btn btn-info"><i style="margin-right: 10px" class="fas fa-plus-circle"></i>New Project</a></span>
+              </div>
+              {% endif %}
+              <div style="margin-top: 20px">
+                {% if projects %}
+                <div class="row backg" style="margin-top: 50px;">
+                    <!-- list of all projects -->
+                    {% for project in projects %}
+                        <div class="col-lg-6" style="margin-bottom: 10px;">
+                            <div class="card text-center">
+                                <div class="card-header">
+                                    <h5><a class="blue-link" href="{% url 'one_project' project.id %}">{{project.name}}</a></h5>
+                                    <h6>{{project.git_repo}}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">{{project.description}}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>There are no projects available.</p>
+            {% endif %}
+              </div>
+          </div>
+      </div>
+      {% if user == selected_user %}
+      <div class="tab-pane fade" id="collaborator" role="tabpanel" aria-labelledby="collaborator-tab">
+          <div>
+              <div style="margin-top: 20px">
+                {% if project_colab %}
+                <div class="row backg" style="margin-top: 50px;">
+                    <!-- list of all projects -->
+                    {% for project in project_colab %}
+                        <div class="col-lg-6" style="margin-bottom: 10px;">
+                            <div class="card text-center">
+                                <div class="card-header">
+                                    <h5><a class="blue-link" href="{% url 'one_project' project.id %}">{{project.name}}</a></h5>
+                                    <h6>{{project.git_repo}}</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">{{project.description}}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>There are no projects available.</p>
+            {% endif %}
+              </div>
+          </div>
+      </div>
+      {% endif %}
+
+    <!-- followers tab -->
+      <div class="tab-pane fade" id="followers" role="tabpanel" aria-labelledby="issue-tab">
+          <div style="margin-top: 20px">
+            {% if selected_user_followers %}
+                <!-- list of users -->
+                {% for person in selected_user_followers %}                
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <div class="row">
+                                  <!--Ovde ide slika korisnika-->
+                                    <div class="media ml-2">
+                                        <img class="img-thumbnail account-img" height="60" width="60" src="{{ person.user.profile.image.url }}">
+                                    </div>
+                                    <!--Ovde ide username-->
+                                    <div class="media-body">
+                                        <h5 class="card-title mb-0 ml-3"><a class="blue-link" href="{% url 'profile' person.user.username %}"> {{person.user.username}}</a></h5>
+                                        <small class="text-secondary ml-3">{{person.user.first_name}} {{person.user.last_name}}</small>
+                                    </div>
+                                    {% for is_follow_possible in final_for_followers %}
+                                      {% if forloop.counter == forloop.parentloop.counter %}  
+                                        {% if is_follow_possible == False and user != person.user%}
+                                          <div class=" justify-content-end"><a id="{{person.user.username}}" class="btn btn-info btn-sm mr-2 unfollow text-white" >Unfollow</a></div>
+                                        {% endif %}
+                                        {%if is_follow_possible and user != person.user %}
+                                          <div class=" justify-content-end"><a id="{{person.user.username}}" class="btn btn-info btn-sm mr-2 follow text-white" >Follow</a></div>
+                                        {% endif %}
+                                      {% endif %}
+                                    {% endfor %}
+                                </div>                                  
+                              </div>
+                          </div>
+                 
+                {% endfor %}
+
+            {% else %}
+              <p>There are no users.</p>
+            {% endif %}
+
+
+          </div>
+      </div>
+      <!-- following tab -->
+      <div class="tab-pane fade" id="following" role="tabpanel" aria-labelledby="milestone-tab">
+          <div style="margin-top: 20px">
+              <div style="margin-top: 20px">
+              {% if selected_user_following %}
+                    <!-- list of users -->                 
+                    {% for person in selected_user_following %}                      
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <div class="row">
+                                    <!--Ovde ide slika korisnika-->
+                                    <div class="media ml-2">
+                                        <img class="img-thumbnail account-img" height="60" width="60" src="{{ person.user.profile.image.url }}">
+                                    </div>
+                                    <!--Ovde ide username-->
+                                    <div class="media-body">
+                                        <h5 class="card-title mb-0 ml-3"><a class="blue-link" href="{% url 'profile' person.user.username %}"> {{person.user.username}}</a></h5>
+                                        <small class="text-secondary ml-3">{{person.user.first_name}} {{person.user.last_name}}</small>
+                                    </div>
+                                    {% for is_follow_possible in final_for_following %}
+                                      {% if forloop.counter == forloop.parentloop.counter %}    
+                                        {% if is_follow_possible == False and user != person.user%}
+                                        <div class=" justify-content-end"><a id="{{person.user.username}}" class="btn btn-info btn-sm mr-2 unfollow text-white" >Unfollow</a></div>
+                                        {% endif %}
+                                        {%if is_follow_possible and user != person.user %}
+                                          <div class=" justify-content-end"><a id="{{person.user.username}}" class="btn btn-info btn-sm mr-2 follow text-white" >Follow</a></div>
+                                        {% endif %}
+                                      {% endif %}
+                                    {% endfor %}
+                                </div>                               
+                            </div>
+                        </div>
+                     
+                  {% endfor %}
+
+                {% else %}
+                    <p>There are no users.</p>
+                {% endif %}
+              </div>
+          </div>
+      </div>
+      <!-- add new tabs ? -->
+  </div>
+  </ul>
+  </div>
+</div>
+{% endblock content %}

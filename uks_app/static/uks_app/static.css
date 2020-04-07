@@ -1,0 +1,49 @@
+a:visited.blue-link {
+    color: #17a2b8;
+}
+
+a:link.blue-link {
+    color: #17a2b8;
+}
+
+a:visited.black-link {
+    color: #000000;
+}
+
+a:link.black-link {
+    color: #000000;
+}
+
+a:hover.black-link {
+    color: #17a2b8;
+    text-decoration: none;
+}
+
+a:link.tab-link {
+    color: #252525;
+}
+
+a:link.tab-link.active {
+    color: #17a2b8;
+}
+
+.center-confirmation {
+    margin: auto;
+    width: 50%;
+  }
+
+.something {
+    margin-top: 1px;
+    margin-bottom: 1px;
+    padding-left: 9px;
+    padding-right: 9px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    font-weight: 400;
+    font-size: 1rem;
+    color: #586069;
+    background-color: initial;
+    border: 1px solid rgba(27,31,35,.15);
+    box-shadow: none;
+}
+
