@@ -60,7 +60,7 @@ spec:
                   key: email_use_tls
 
             - name: DEBUG
-              value: True
+              value: 'True'
               
             - name: SECRET_KEY
               valueFrom:

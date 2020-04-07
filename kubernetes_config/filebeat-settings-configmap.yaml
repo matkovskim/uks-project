@@ -38,7 +38,7 @@ data:
                   log:
                     input:
                       type: docker
-                      containers.
+                      containers:
                         ids:
                         - "*"
 
