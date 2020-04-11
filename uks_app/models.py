@@ -97,6 +97,7 @@ class CommentChange(models.Model):
 
 class CodeChange(models.Model):
     url = models.CharField(max_length=200, blank=False)
+    title = models.CharField(max_length=400)
     message = models.CharField(max_length=400)
     project = models.ForeignKey(to=ObservedProject, null=False, on_delete=models.CASCADE)
     user = models.ForeignKey(to=User, null=True, on_delete=models.CASCADE)

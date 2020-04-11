@@ -27,10 +27,15 @@ def hook_receiver_view(request):
                 username=commit["author"]["name"]
                 time=commit["timestamp"]
                 users=User.objects.filter(Q(email = email))
+                message_parts = message.split('\n\n')
+                title=message_parts[0]
+                message=""
+                if len(message_parts)>1:
+                    message=message_parts[1]
                 if len(users)==0:
-                    q = CodeChange.objects.create(url=commit_url, project=project.first(), message=message, date_time=time, github_username=username)
+                    q = CodeChange.objects.create(url=commit_url, project=project.first(), title=title, message=message, date_time=time, github_username=username)
                 else:
-                    q = CodeChange.objects.create(url=commit_url, project=project.first(), message=message, user=users[0], date_time=time, github_username=username)
+                    q = CodeChange.objects.create(url=commit_url, project=project.first(), title=title, message=message, user=users[0], date_time=time, github_username=username)
                 #povezivanje sa issuima
                 regex_matches = re.findall('~(.+?)~', message)
                 regex_matches_close = re.findall('close ~(.+?)~', message)

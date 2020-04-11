@@ -117,23 +117,27 @@ function setChart(){
                 {% if object.codechange_set.all %}
                     <!-- list of issues -->
                     {% for code_change in object.codechange_set.all %}
-                        <div class="card">
-                            <div class="card-body">
+
+                        <div class="card mb-2">
+                            <div class="card-body ml-3 pb-0">
                                 <div class="row mt-0">
-                                    <h5 class="card-title mb-0">{{code_change.message}}</h5>
+                                    <h5 class="card-title mb-0">{{code_change.title}}</h5>
+                                </div>
+                                <div class="row mt-0">
+                                    <p class="card-title mt-0 mb-2">{{code_change.message}}</p>
                                 </div>
                                 <div class="row">
-                                    <p class="card-text mb-0"><a href={{code_change.url}}>{{code_change.url}}</a></p>
+                                    <p class="card-text mb-0"><a class="black-link" href={{code_change.url}}>{{code_change.url}}</a></p>
                                 </div>
                                 <div class="row text-muted">
                                     {% if code_change.user %}
                                     <img class="img-thumbnail account-img" height="30" width="30" src="{{ code_change.user.profile.image.url }}">
-                                    <p class="card-text mb-0 mt-1"><a href="{% url 'profile' code_change.user.username %}">{{code_change.user.username}}</a> 
+                                    <p class="card-text mb-0 mt-1"><a class="blue-link" href="{% url 'profile' code_change.user.username %}">{{code_change.user.username}}</a> 
                                     {% endif %}
                                         {% if not code_change.user %}
-                                            <p>GitHub user: {{code_change.github_username}} &nbsp; </p> 
+                                            <p class="mt-2">GitHub user: {{code_change.github_username}} &nbsp; </p> 
                                         {% endif %}
-                                        {{code_change.date_time}}
+                                        <p class="mt-2">{{code_change.date_time}}</p>
                                     </p>
                                 </div>
                             </div>

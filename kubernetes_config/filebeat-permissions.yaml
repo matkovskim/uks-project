@@ -1,7 +1,6 @@
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
-  namespace: monitoring
   name: filebeat
 subjects:
 - kind: ServiceAccount
@@ -15,7 +14,6 @@ roleRef:
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
 metadata:
-  namespace: monitoring
   name: filebeat
   labels:
     app: filebeat
