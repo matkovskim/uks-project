@@ -31,16 +31,16 @@ data:
         - type: kubernetes
           templates:
             - condition.equals:
-                kubernetes.labels.app: mongo
+                kubernetes.labels.app: postgres-container
               config:
-                - module: mongodb
+                - module: postgresql
                   enabled: true
                   log:
                     input:
                       type: docker
                       containers:
                         ids:
-                        - "*"
+                        - ${data.kubernetes.container.id}
 
     processors:
       - drop_event:
