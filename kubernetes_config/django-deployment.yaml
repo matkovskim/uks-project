@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: django-service
-          image: tim3uks.azurecr.io/uks
+          image: tim3uksftn.azurecr.io/uks
           ports:
             - containerPort: 8000
           env:

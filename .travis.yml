@@ -16,10 +16,10 @@ script:
 before_script:
 - psql -c "CREATE DATABASE travisci;" -U postgres
 after_success:
-- docker build -t tim3uks.azurecr.io/uks --build-arg git_key=$SOCIAL_AUTH_GITHUB_KEY --build-arg git_secret=$SOCIAL_AUTH_GITHUB_SECRET .
-- echo "$AZURE_PASSWORD" | docker login -u "$AZURE_USERNAME" --password-stdin tim3uks.azurecr.io
-- docker tag uks tim3uks.azurecr.io/uks
-- docker push tim3uks.azurecr.io/uks
+- docker build -t tim3uksftn.azurecr.io/uks --build-arg git_key=$SOCIAL_AUTH_GITHUB_KEY --build-arg git_secret=$SOCIAL_AUTH_GITHUB_SECRET .
+- echo "$AZURE_PASSWORD" | docker login -u "$AZURE_USERNAME" --password-stdin tim3uksftn.azurecr.io
+- docker tag uks tim3uksftn.azurecr.io/uks
+- docker push tim3uksftn.azurecr.io/uks
 deploy:
   provider: script
   script: bash scripts/deploy.sh
