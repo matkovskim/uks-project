@@ -6,7 +6,7 @@
 
 MiniHub is a web application for managing projects which supports user collaboration on projects, creating and tracking issues, tracking changes in git repositories.
 
-MiniHub is created for the purpose of the Software Configuration Management course at the Faculty of Technical Sciences, University of Novi sad.
+MiniHub is created for the purpose of the Software Configuration Management course at the Faculty of Technical Sciences, University of Novi Sad.
 
 ## Deployment
 
